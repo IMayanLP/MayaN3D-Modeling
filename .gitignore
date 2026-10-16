@@ -1,0 +1,9 @@
+﻿/cmake-build-debug/
+
+.idea
+
+*.blend
+*.txt
+
+/lib/*
+!/lib/.gitkeep
