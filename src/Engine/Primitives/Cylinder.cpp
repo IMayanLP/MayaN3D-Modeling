@@ -2,7 +2,7 @@
 #include <algorithm>
 #include <cmath>
 
-Cylinder::Cylinder(float radius, float height) : radius(radius), height(height) {}
+Cylinder::Cylinder(float radius, float height) : Primitive(PrimitiveType::Cylinder), radius(radius), height(height) {}
 
 Intersection Cylinder::CheckIntersection(const Cell& cell) const {
     glm::mat4 inverseRotation = glm::inverse(GetRotationMatrix());
@@ -107,4 +107,78 @@ Cell Cylinder::GetBoundingBox() const {
         -boundingSize / 2.0f,
         boundingSize
     };
+}
+
+std::unique_ptr<Primitive> Cylinder::Clone() const {
+    return std::make_unique<Cylinder>(*this);
+}
+
+std::vector<RayIntersection> Cylinder::IntersectRay(const Ray& ray) const {
+    std::vector<RayIntersection> intersections;
+
+    glm::vec3 origin = ray.GetOrigin();
+    glm::vec3 direction = ray.GetDirection();
+
+    float halfHeight = height / 2.0f;
+
+    float a = direction.x * direction.x + direction.z * direction.z;
+    float b = 2.0f * (origin.x * direction.x + origin.z * direction.z);
+    float c = origin.x * origin.x + origin.z * origin.z - radius * radius;
+
+    if (a > 1e-6f) {
+        float delta = b * b - 4.0f * a * c;
+
+        if (delta >= 0.0f) {
+            float deltaSqrt = std::sqrt(delta);
+            float x1 = (-b - deltaSqrt) / (2.0f * a);
+            float x2 = (-b + deltaSqrt) / (2.0f * a);
+
+            if (x1 >= 0.0f) {
+                glm::vec3 intersecPoint = origin + x1 * direction;
+
+                if (intersecPoint.y >= -halfHeight && intersecPoint.y <= halfHeight) {
+                    glm::vec3 normal = glm::normalize(glm::vec3(intersecPoint.x, 0.0f, intersecPoint.z));
+                    intersections.push_back({x1, intersecPoint, normal});
+                }
+            }
+
+            if (delta > 0.0f && x2 >= 0.0f) {
+                glm::vec3 intersecPoint = origin + x2 * direction;
+
+                if (intersecPoint.y >= -halfHeight && intersecPoint.y <= halfHeight) {
+                    glm::vec3 normal = glm::normalize(glm::vec3(intersecPoint.x, 0.0f, intersecPoint.z));
+                    intersections.push_back({x2, intersecPoint, normal});
+                }
+            }
+        }
+    }
+
+    if (std::abs(direction.y) > 1e-6f) {
+        float bot = (-halfHeight - origin.y) / direction.y;
+
+        if (bot >= 0.0f) {
+            glm::vec3 point = origin + bot * direction;
+
+            if (point.x * point.x + point.z * point.z <= radius * radius) {
+                intersections.push_back({bot, point, glm::vec3(0.0f, -1.0f, 0.0f)});
+            }
+        }
+
+        float top = (halfHeight - origin.y) / direction.y;
+
+        if (top >= 0.0f) {
+            glm::vec3 point = origin + top * direction;
+
+            if (point.x * point.x + point.z * point.z <= radius * radius) {
+                intersections.push_back({top, point, glm::vec3(0.0f, 1.0f, 0.0f)});
+            }
+        }
+    }
+
+    std::sort(intersections.begin(), intersections.end(),
+        [](const RayIntersection& a, const RayIntersection& b) {
+            return a.t < b.t;
+        });
+
+    return intersections;
 }

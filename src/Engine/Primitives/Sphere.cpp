@@ -2,7 +2,7 @@
 #include <algorithm>
 #include <cmath>
 
-Sphere::Sphere(float radius) : radius(radius) {}
+Sphere::Sphere(float radius) : Primitive(PrimitiveType::Sphere), radius(radius) {}
 
 Intersection Sphere::CheckIntersection(const Cell& cell) const {
     float minX = cell.x;
@@ -39,4 +39,41 @@ Cell Sphere::GetBoundingBox() const {
         -radius,
         size
     };
+}
+
+std::unique_ptr<Primitive> Sphere::Clone() const {
+    return std::make_unique<Sphere>(*this);
+}
+
+std::vector<RayIntersection> Sphere::IntersectRay(const Ray& ray) const {
+    std::vector<RayIntersection> intersections;
+
+    glm::vec3 origin = ray.GetOrigin();
+    glm::vec3 direction = ray.GetDirection();
+
+    float a = glm::dot(direction, direction);
+    float b = 2.0f * glm::dot(origin, direction);
+    float c = glm::dot(origin, origin) - radius * radius;
+
+    float delta = b * b - 4.0f * a * c;
+
+    if (delta < 0.0f) return intersections;
+
+    float deltaSqrt = std::sqrt(delta);
+    float x1 = (-b - deltaSqrt) / (2.0f * a);
+    float x2 = (-b + deltaSqrt) / (2.0f * a);
+
+    if (x1 >= 0.0f) {
+        glm::vec3 intersecPoint = origin + x1 * direction;
+        glm::vec3 normal = glm::normalize(intersecPoint);
+        intersections.push_back({x1, intersecPoint, normal});
+    }
+
+    if (delta > 0.0f && x2 >= 0.0f) {
+        glm::vec3 intersecPoint = origin + x2 * direction;
+        glm::vec3 normal = glm::normalize(intersecPoint);
+        intersections.push_back({x2, intersecPoint, normal});
+    }
+
+    return intersections;
 }

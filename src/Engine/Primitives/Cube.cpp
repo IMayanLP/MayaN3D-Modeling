@@ -1,7 +1,7 @@
 ﻿#include "Cube.h"
 #include <algorithm>
 
-Cube::Cube(float width, float height, float depth) : sizeX(width), sizeY(height), sizeZ(depth) {}
+Cube::Cube(float width, float height, float depth) : Primitive(PrimitiveType::Cube), sizeX(width), sizeY(height), sizeZ(depth) {}
 
 Intersection Cube::CheckIntersection(const Cell& cell) const {
     glm::mat4 inverseRotation = glm::inverse(GetRotationMatrix());
@@ -89,4 +89,69 @@ Cell Cube::GetBoundingBox() const {
         -boundingSize / 2.0f,
         boundingSize
     };
+}
+
+std::unique_ptr<Primitive> Cube::Clone() const {
+    return std::make_unique<Cube>(*this);
+}
+
+std::vector<RayIntersection> Cube::IntersectRay(const Ray& ray) const {
+    std::vector<RayIntersection> intersections;
+
+    glm::vec3 origin = ray.GetOrigin();
+    glm::vec3 direction = ray.GetDirection();
+
+    glm::vec3 halfSize(sizeX / 2.0f, sizeY / 2.0f, sizeZ / 2.0f);
+    float xMin = -std::numeric_limits<float>::infinity();
+    float xMax = std::numeric_limits<float>::infinity();
+    glm::vec3 normalMin(0.0f);
+    glm::vec3 normalMax(0.0f);
+
+    for (int axis = 0; axis < 3; axis++) {
+        if (std::abs(direction[axis]) < 1e-6f) {
+            if (origin[axis] < -halfSize[axis] || origin[axis] > halfSize[axis]) return intersections;
+            continue;
+        }
+
+        float x1 = (-halfSize[axis] - origin[axis]) / direction[axis];
+        float x2 = (halfSize[axis] - origin[axis]) / direction[axis];
+
+        glm::vec3 normal1(0.0f);
+        glm::vec3 normal2(0.0f);
+        normal1[axis] = -1.0f;
+        normal2[axis] = 1.0f;
+
+        if (x1 > x2) {
+            std::swap(x1, x2);
+            std::swap(normal1, normal2);
+        }
+
+        if (x1 > xMin) {
+            xMin = x1;
+            normalMin = normal1;
+        }
+
+        if (x2 < xMax) {
+            xMax = x2;
+            normalMax = normal2;
+        }
+
+        if (xMin > xMax) {
+            return intersections;
+        }
+    }
+
+    if (xMax < 0.0f) return intersections;
+
+    if (xMin >= 0.0f) {
+        glm::vec3 intersecPoint = origin + xMin * direction;
+        intersections.push_back({xMin, intersecPoint, normalMin});
+    }
+
+    if (xMax >= 0.0f && xMax > xMin) {
+        glm::vec3 intersecPoint = origin + xMax * direction;
+        intersections.push_back({xMax, intersecPoint, normalMax});
+    }
+
+    return intersections;
 }

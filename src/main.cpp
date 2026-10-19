@@ -24,6 +24,8 @@
 #include "Engine/Primitives/Cone.h"
 #include "Engine/Primitives/Cube.h"
 #include "Engine/Octree/Octree.h"
+#include "Engine/CSG/CSG.h"
+#include "Engine/Ray/Ray.h"
 
 namespace fs = std::filesystem;
 
