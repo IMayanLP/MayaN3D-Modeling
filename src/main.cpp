@@ -26,6 +26,7 @@
 #include "Engine/Octree/Octree.h"
 #include "Engine/CSG/CSG.h"
 #include "Engine/Ray/Ray.h"
+#include "Engine/CSG/SMC.h"
 
 namespace fs = std::filesystem;
 

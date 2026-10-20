@@ -202,10 +202,25 @@ std::vector<RayIntersection> Cone::IntersectRay(const Ray& ray) const {
         }
     }
 
-    std::sort(intersections.begin(), intersections.end(),
-        [](const RayIntersection& a, const RayIntersection& b) {
+    std::sort(intersections.begin(), intersections.end(), [](const RayIntersection& a, const RayIntersection& b) {
             return a.t < b.t;
         });
 
     return intersections;
+}
+
+SMCClassification Cone::CheckIsInside(const glm::vec3& point) const {
+    float halfHeight = height / 2.0f;
+    float radiusAtY = radius * (halfHeight - point.y) / height;
+    float radialDist2 = point.x * point.x + point.z * point.z;
+    float radiusY2 = radiusAtY * radiusAtY;
+    float e = 1e-6f;
+
+    if (point.y < -halfHeight - e || point.y > halfHeight + e) return SMCClassification::OUT;
+    if (std::abs(point.y + halfHeight) <= e && radialDist2 <= radius * radius + e) return SMCClassification::ON;
+    if (std::abs(point.y - halfHeight) <= e && radialDist2 <= e) return SMCClassification::ON;
+    if (std::abs(radialDist2 - radiusY2) <= e && point.y >= -halfHeight && point.y <= halfHeight) return SMCClassification::ON;
+    if (point.y > -halfHeight && point.y < halfHeight && radialDist2 < radiusY2) return SMCClassification::IN;
+
+    return SMCClassification::OUT;
 }

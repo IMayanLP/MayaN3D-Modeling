@@ -175,10 +175,25 @@ std::vector<RayIntersection> Cylinder::IntersectRay(const Ray& ray) const {
         }
     }
 
-    std::sort(intersections.begin(), intersections.end(),
-        [](const RayIntersection& a, const RayIntersection& b) {
+    std::sort(intersections.begin(), intersections.end(), [](const RayIntersection& a, const RayIntersection& b) {
             return a.t < b.t;
         });
 
     return intersections;
+}
+
+SMCClassification Cylinder::CheckIsInside(const glm::vec3& point) const {
+    float halfHeight = height / 2.0f;
+    float radialDist2 = point.x * point.x + point.z * point.z;
+    float radius2 = radius * radius;
+    float e = 1e-6f;
+
+    bool insideHeight = std::abs(point.y) < halfHeight;
+    bool insideRadius = radialDist2 < radius2;
+
+    if (std::abs(std::abs(point.y) - halfHeight) <= e && radialDist2 <= radius2 + e) return SMCClassification::ON;
+    if (std::abs(radialDist2 - radius2) <= e && std::abs(point.y) <= halfHeight + e) return SMCClassification::ON;
+    if (insideHeight && insideRadius) return SMCClassification::IN;
+
+    return SMCClassification::OUT;
 }

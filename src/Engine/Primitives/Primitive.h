@@ -10,6 +10,12 @@ enum class Intersection {
     Intersecting
 };
 
+enum class SMCClassification {
+    IN,
+    ON,
+    OUT
+};
+
 enum class PrimitiveType {
     Cube,
     Sphere,
@@ -35,6 +41,7 @@ class Primitive {
         // CSG
         virtual std::unique_ptr<Primitive> Clone() const = 0;
         virtual std::vector<RayIntersection> IntersectRay(const Ray& ray) const = 0;
+        virtual SMCClassification CheckIsInside(const glm::vec3& point) const = 0;
 
     protected:
         glm::vec3 rotation = glm::vec3(0.0f);

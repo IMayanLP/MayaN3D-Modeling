@@ -155,3 +155,36 @@ std::vector<RayIntersection> Cube::IntersectRay(const Ray& ray) const {
 
     return intersections;
 }
+
+SMCClassification Cube::CheckIsInside(const glm::vec3& point) const {
+    float halfWidth = sizeX / 2.0f;
+    float halfHeight = sizeY / 2.0f;
+    float halfDepth = sizeZ / 2.0f;
+    float e = 1e-6f;
+
+    if (std::abs(std::abs(point.x) - halfWidth) <= e &&
+        std::abs(point.y) <= halfHeight + e &&
+        std::abs(point.z) <= halfDepth + e) {
+        return SMCClassification::ON;
+        }
+
+    if (std::abs(std::abs(point.y) - halfHeight) <= e &&
+        std::abs(point.x) <= halfWidth + e &&
+        std::abs(point.z) <= halfDepth + e) {
+        return SMCClassification::ON;
+        }
+
+    if (std::abs(std::abs(point.z) - halfDepth) <= e &&
+        std::abs(point.x) <= halfWidth + e &&
+        std::abs(point.y) <= halfHeight + e) {
+        return SMCClassification::ON;
+        }
+
+    if (std::abs(point.x) < halfWidth &&
+        std::abs(point.y) < halfHeight &&
+        std::abs(point.z) < halfDepth) {
+        return SMCClassification::IN;
+        }
+
+    return SMCClassification::OUT;
+}

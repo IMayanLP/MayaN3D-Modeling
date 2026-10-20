@@ -77,3 +77,12 @@ std::vector<RayIntersection> Sphere::IntersectRay(const Ray& ray) const {
 
     return intersections;
 }
+
+SMCClassification Sphere::CheckIsInside(const glm::vec3& point) const {
+    float d = point.x * point.x + point.y * point.y + point.z * point.z;
+
+    if (std::abs(d - radius * radius) < 1e-6f) return SMCClassification::ON;
+    if (d < radius * radius) return SMCClassification::IN;
+
+    return SMCClassification::OUT;
+}
