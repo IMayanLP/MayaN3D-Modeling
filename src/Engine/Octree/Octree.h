@@ -36,7 +36,7 @@ public:
     const Node* GetRoot() const;
     void Print();
     std::string ToString() const;
-    static Octree ImportFromString(const std::string& data);
+    static Octree ImportFromString(const std::string&);
 
     void setMaxLevel(int);
     int GetMaxLevel() const;
@@ -71,7 +71,7 @@ private:
     void Aux(Primitive&, Node*, int);
     void PrintNode(const Node*) const;
     void ToStringNode(const Node*, std::string&) const;
-    static std::unique_ptr<Node> ImportNode(const std::string& data, int& pos, const Cell& cell, Node* parent, int depth, int& maxDepthOut);
+    static std::unique_ptr<Node> ImportNode(const std::string&, int&, const Cell&, Node*, int, int&);
 
     // procedimentos de analise
     float auxVolume(Node*) const;

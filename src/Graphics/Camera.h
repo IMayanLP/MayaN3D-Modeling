@@ -10,9 +10,9 @@ class Camera {
         void Rotate(float, float);
         void Zoom(float);
 
-        void MoveForward(float amount);
-        void MoveRight(float amount);
-        void MoveUp(float amount);
+        void MoveForward(float);
+        void MoveRight(float);
+        void MoveUp(float);
 
         void ResetPosition();
         void ResetRotation();

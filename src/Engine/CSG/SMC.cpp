@@ -18,6 +18,10 @@ std::vector<SMCInterval> SMC::ClassifyNode(const CSGNode* node, const Ray& ray) 
         return ClassifyTransform(node, ray);
     }
 
+    if (node->type == CSGNodeType::Boolean) {
+        return ClassifyBoolean(node, ray);
+    }
+
     return {};
 }
 
@@ -167,4 +171,141 @@ std::vector<SMCInterval> SMC::ClassifyTransform(const CSGNode* node, const Ray& 
     }
 
     return {};
+}
+
+std::vector<SMCInterval> SMC::ClassifyBoolean(const CSGNode* node, const Ray& ray) {
+    if (node == nullptr || node->left == nullptr || node->right == nullptr) return {};
+
+    std::vector<SMCInterval> intervalsA = ClassifyNode(node->left.get(), ray);
+    std::vector<SMCInterval> intervalsB = ClassifyNode(node->right.get(), ray);
+
+    std::vector<SMCInterval> normalizedA = NormalizeIntervals(intervalsA, intervalsB);
+    std::vector<SMCInterval> normalizedB = NormalizeIntervals(intervalsB, intervalsA);
+
+    std::vector<SMCInterval> result;
+
+    if (node->booleanOperation == BooleanOperation::Union) {
+        for (std::size_t i = 0; i < normalizedA.size(); ++i) {
+            SMCInterval interval = normalizedA[i];
+
+            if (normalizedA[i].classification == SMCClassification::IN || normalizedB[i].classification == SMCClassification::IN) {
+                interval.classification = SMCClassification::IN;
+            } else interval.classification = SMCClassification::OUT;
+
+            result.push_back(interval);
+        }
+    }
+
+    else if (node->booleanOperation == BooleanOperation::Intersection) {
+        for (std::size_t i = 0; i < normalizedA.size(); ++i) {
+            SMCInterval interval = normalizedA[i];
+
+            if (normalizedA[i].classification == SMCClassification::IN && normalizedB[i].classification == SMCClassification::IN) {
+                interval.classification = SMCClassification::IN;
+            } else interval.classification = SMCClassification::OUT;
+
+            result.push_back(interval);
+        }
+    }
+
+    else if (node->booleanOperation == BooleanOperation::Difference) {
+        for (std::size_t i = 0; i < normalizedA.size(); ++i) {
+            SMCInterval interval = normalizedA[i];
+
+            if (normalizedA[i].classification == SMCClassification::IN && normalizedB[i].classification == SMCClassification::OUT) {
+                interval.classification = SMCClassification::IN;
+            } else interval.classification = SMCClassification::OUT;
+
+            result.push_back(interval);
+        }
+    }
+
+    result = MergeIntervals(result);
+
+    // invertendo normais vindas de B na diferença
+    if (node->booleanOperation == BooleanOperation::Difference) {
+        const float e = 1e-5f;
+
+        for (SMCInterval& interval : result) {
+            for (const SMCInterval& intervalB : intervalsB) {
+                if (std::abs(interval.start.intersection.t - intervalB.start.intersection.t) < e) {
+                    interval.start = intervalB.start;
+                    interval.start.intersection.normal = -interval.start.intersection.normal;
+                    break;
+                }
+            }
+
+            for (const SMCInterval& intervalB : intervalsB) {
+                if (std::abs(interval.end.intersection.t - intervalB.start.intersection.t) < e) {
+                    interval.end = intervalB.start;
+                    interval.end.intersection.normal = -interval.end.intersection.normal;
+                    break;
+                }
+            }
+        }
+    }
+
+    return result;
+}
+
+std::vector<SMCInterval> SMC::NormalizeIntervals(const std::vector<SMCInterval>& A, const std::vector<SMCInterval>& B) {
+    std::vector<SMCIntersection> boundaries;
+    std::size_t indexA = 0;
+    std::size_t indexB = 0;
+
+    while (indexA < A.size() || indexB < B.size()) {
+        if (indexA >= A.size()) boundaries.push_back(B[indexB++].start);
+        else if (indexB >= B.size()) boundaries.push_back(A[indexA++].start);
+        else {
+            float tA = A[indexA].start.intersection.t;
+            float tB = B[indexB].start.intersection.t;
+
+            if (tA < tB) boundaries.push_back(A[indexA++].start);
+            else if (tB < tA) boundaries.push_back(B[indexB++].start);
+            else {
+                boundaries.push_back(A[indexA].start);
+                ++indexA;
+                ++indexB;
+            }
+        }
+    }
+
+    std::vector<SMCInterval> result;
+    std::size_t intervalAIndex = 0;
+
+    for (std::size_t i = 0; i < boundaries.size(); ++i) {
+        const SMCIntersection& start = boundaries[i];
+
+        SMCIntersection end;
+
+        if (i + 1 < boundaries.size()) end = boundaries[i + 1];
+        else {
+            end = A.back().end;
+
+            if (B.back().end.intersection.t < end.intersection.t) end = B.back().end;
+        }
+
+        while (intervalAIndex + 1 < A.size() && A[intervalAIndex].end.intersection.t <= start.intersection.t) ++intervalAIndex;
+
+        result.push_back({start, end, A[intervalAIndex].classification});
+    }
+
+    return result;
+}
+
+std::vector<SMCInterval> SMC::MergeIntervals(const std::vector<SMCInterval>& intervals) {
+    if (intervals.empty()) return {};
+
+    std::vector<SMCInterval> result;
+    result.push_back(intervals[0]);
+
+    for (std::size_t i = 1; i < intervals.size(); ++i) {
+        SMCInterval& previous = result.back();
+        const SMCInterval& current = intervals[i];
+
+        if (previous.classification == current.classification) previous.end = current.end;
+        else result.push_back(current);
+    }
+
+    return result;
 }

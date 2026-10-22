@@ -10,7 +10,7 @@ struct RayIntersection {
 
 class Ray {
 public:
-    Ray(const glm::vec3& origin, const glm::vec3& direction);
+    Ray(const glm::vec3&, const glm::vec3&);
 
     glm::vec3 GetOrigin() const;
     glm::vec3 GetDirection() const;

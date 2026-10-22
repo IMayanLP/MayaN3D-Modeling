@@ -9,8 +9,8 @@ class Cube : public Primitive {
         Cell GetBoundingBox() const override;
 
         std::unique_ptr<Primitive> Clone() const override;
-        std::vector<RayIntersection> IntersectRay(const Ray& ray) const override;
-        SMCClassification CheckIsInside(const glm::vec3& point) const override;
+        std::vector<RayIntersection> IntersectRay(const Ray&) const override;
+        SMCClassification CheckIsInside(const glm::vec3&) const override;
 
     private:
         float sizeX;

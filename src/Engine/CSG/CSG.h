@@ -40,12 +40,12 @@ struct CSGNode {
 class CSG {
     public:
         CSG() = default;
-        void SetRoot(std::unique_ptr<CSGNode> node);
+        void SetRoot(std::unique_ptr<CSGNode>);
         const CSGNode* GetRoot() const;
 
-        static std::unique_ptr<CSGNode> CreatePrimitiveNode(const Primitive& primitive);
-        static std::unique_ptr<CSGNode> CreateBooleanNode(BooleanOperation operation, std::unique_ptr<CSGNode> leftChild, std::unique_ptr<CSGNode> rightChild);
-        static std::unique_ptr<CSGNode> CreateTransformNode(TransformType transform, glm::vec3 value, std::unique_ptr<CSGNode> child);
+        static std::unique_ptr<CSGNode> CreatePrimitiveNode(const Primitive&);
+        static std::unique_ptr<CSGNode> CreateBooleanNode(BooleanOperation, std::unique_ptr<CSGNode>, std::unique_ptr<CSGNode>);
+        static std::unique_ptr<CSGNode> CreateTransformNode(TransformType, glm::vec3, std::unique_ptr<CSGNode>);
 
     private:
         std::unique_ptr<CSGNode> root;

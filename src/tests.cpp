@@ -89,6 +89,22 @@ void TestSMCTransform(const std::string& description, const CSG& csg, const glm:
     }
 }
 
+SMCInterval CreateTestInterval(float startT, float endT, SMCClassification classification) {
+    SMCIntersection start;
+    start.intersection.t = startT;
+    start.intersection.point = glm::vec3(startT, 0.0f, 0.0f);
+    start.intersection.normal = glm::vec3(0.0f);
+    start.classification = SMCClassification::ON;
+
+    SMCIntersection end;
+    end.intersection.t = endT;
+    end.intersection.point = glm::vec3(endT, 0.0f, 0.0f);
+    end.intersection.normal = glm::vec3(0.0f);
+    end.classification = SMCClassification::ON;
+
+    return {start, end, classification};
+}
+
 int main() {
     Sphere sphere(1.0f);
     Cube cube(2.0f, 2.0f, 2.0f);
