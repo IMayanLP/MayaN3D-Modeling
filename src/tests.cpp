@@ -169,5 +169,31 @@ int main() {
     TestSMCTransform("Cylinder Translation", cylinderCSG, glm::vec3(2.0f, 0.0f, 3.0f), glm::vec3(0.0f, 0.0f, -1.0f));
     TestSMCTransform("Cone Translation", coneCSG, glm::vec3(2.0f, 0.0f, 3.0f), glm::vec3(0.0f, 0.0f, -1.0f));
 
+    Sphere sphereA(1);
+    Cube cube(1.7f, 1.7f, 1.7f);
+
+    std::unique_ptr<CSGNode> nodeA = CSG::CreatePrimitiveNode(sphereA);
+    std::unique_ptr<CSGNode> nodeB = CSG::CreatePrimitiveNode(cube);
+
+    std::unique_ptr<CSGNode> differenceNode = CSG::CreateBooleanNode(
+        BooleanOperation::Difference,
+        std::move(nodeB),
+        std::move(nodeA));
+
+    CSG differenceCSG;
+    differenceCSG.SetRoot(std::move(differenceNode));
+
+    RayCast rayCast;
+    std::vector<unsigned char> pixels = rayCast.Render(differenceCSG, camera, 800, 600, glm::vec3(1.0f, 0.0f, 0.0f));
+    std::cout << "Pixels gerados: " << pixels.size() << '\n';
+
+    int result = stbi_write_png("files/images/RayCast.png",800,600,3,pixels.data(),800 * 3);
+
+    if (result) std::cout << "Imagem salva com sucesso!\n";
+    else std::cout << "Erro ao salvar a imagem.\n";
+
+
+
+
     return 0;
 }

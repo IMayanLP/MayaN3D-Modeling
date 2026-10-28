@@ -84,3 +84,7 @@ void Camera::MoveUp(float amount) {
     position += offset;
     target += offset;
 }
+
+glm::vec3 Camera::GetPosition() const {
+    return position;
+}

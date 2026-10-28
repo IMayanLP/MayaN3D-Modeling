@@ -7,6 +7,8 @@ class Camera {
         Camera();
 
         glm::mat4 GetViewMatrix() const;
+        glm::vec3 GetPosition() const;
+
         void Rotate(float, float);
         void Zoom(float);
 

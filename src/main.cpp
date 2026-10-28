@@ -26,7 +26,11 @@
 #include "Engine/Octree/Octree.h"
 #include "Engine/CSG/CSG.h"
 #include "Engine/Ray/Ray.h"
+#include "Engine/Ray/RayCast.h"
 #include "Engine/CSG/SMC.h"
+
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "../lib/stb_image_write.h"
 
 namespace fs = std::filesystem;
 
