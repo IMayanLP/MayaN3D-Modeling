@@ -309,3 +309,66 @@ std::vector<SMCInterval> SMC::MergeIntervals(const std::vector<SMCInterval>& int
 
     return result;
 }
+
+std::vector<RayIntersection> SMC::IntersectRayInCell(const Ray& ray, const Cell& cell) {
+    std::vector<RayIntersection> intersections;
+
+    glm::vec3 origin = ray.GetOrigin();
+    glm::vec3 direction = ray.GetDirection();
+
+    glm::vec3 minPoint(cell.x, cell.y, cell.z);
+    glm::vec3 maxPoint(cell.x + cell.size, cell.y + cell.size, cell.z + cell.size);
+
+    float xMin = -std::numeric_limits<float>::infinity();
+    float xMax = std::numeric_limits<float>::infinity();
+    glm::vec3 normalMin(0.0f);
+    glm::vec3 normalMax(0.0f);
+
+    for (int axis = 0; axis < 3; axis++) {
+        if (std::abs(direction[axis]) < 1e-6f) {
+            if (origin[axis] < minPoint[axis] || origin[axis] > maxPoint[axis]) return intersections;
+            continue;
+        }
+
+        float x1 = (minPoint[axis] - origin[axis]) / direction[axis];
+        float x2 = (maxPoint[axis] - origin[axis]) / direction[axis];
+
+        glm::vec3 normal1(0.0f);
+        glm::vec3 normal2(0.0f);
+        normal1[axis] = -1.0f;
+        normal2[axis] = 1.0f;
+
+        if (x1 > x2) {
+            std::swap(x1, x2);
+            std::swap(normal1, normal2);
+        }
+
+        if (x1 > xMin) {
+            xMin = x1;
+            normalMin = normal1;
+        }
+
+        if (x2 < xMax) {
+            xMax = x2;
+            normalMax = normal2;
+        }
+
+        if (xMin > xMax) {
+            return intersections;
+        }
+    }
+
+    if (xMax < 0.0f) return intersections;
+
+    if (xMin >= 0.0f) {
+        glm::vec3 intersecPoint = origin + xMin * direction;
+        intersections.push_back({xMin, intersecPoint, normalMin});
+    }
+
+    if (xMax >= 0.0f && xMax > xMin) {
+        glm::vec3 intersecPoint = origin + xMax * direction;
+        intersections.push_back({xMax, intersecPoint, normalMax});
+    }
+
+    return intersections;
+}

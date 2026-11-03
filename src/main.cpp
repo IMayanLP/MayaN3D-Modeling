@@ -252,6 +252,42 @@ int main() {
     float deltaTime = 0.0f;
     float lastFrame = 0.0f;
 
+
+
+    Sphere sphereA(1);
+    Cube cube(1.7f, 1.7f, 1.7f);
+
+    std::unique_ptr<CSGNode> nodeA = CSG::CreatePrimitiveNode(sphereA);
+    std::unique_ptr<CSGNode> nodeB = CSG::CreatePrimitiveNode(cube);
+    std::unique_ptr<CSGNode> differenceNode = CSG::CreateBooleanNode(BooleanOperation::Difference, std::move(nodeB), std::move(nodeA));
+
+    CSG differenceCSG;
+    differenceCSG.SetRoot(std::move(differenceNode));
+
+    std::unique_ptr<CSGNode> root = differenceCSG.GetAndFreeRoot();
+
+    std::unique_ptr<CSGNode> rotateNode = CSG::CreateTransformNode(TransformType::Rotation, {glm::radians(45.0f), 0.0f, 0.0f}, std::move(root));
+    differenceCSG.SetRoot(std::move(rotateNode));
+
+    Cell boundingBox = differenceCSG.GetBoundingBox();
+
+    std::cout << "Bounding Box:\n";
+    std::cout << "X: " << boundingBox.x << '\n';
+    std::cout << "Y: " << boundingBox.y << '\n';
+    std::cout << "Z: " << boundingBox.z << '\n';
+    std::cout << "Size: " << boundingBox.size << '\n';
+
+    Octree tree = differenceCSG.GenerateOctree();
+
+    tree.setLabel("Teste a partir da CSG");
+    tree.setMaxLevel(5);
+
+    scene.addOctree(std::move(tree));
+
+    RayCast rayCast;
+
+
+
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
 

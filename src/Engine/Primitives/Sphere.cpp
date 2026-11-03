@@ -5,24 +5,20 @@
 Sphere::Sphere(float radius) : Primitive(PrimitiveType::Sphere), radius(radius) {}
 
 Intersection Sphere::CheckIntersection(const Cell& cell) const {
-    float minX = cell.x;
-    float maxX = cell.x + cell.size;
-    float minY = cell.y;
-    float maxY = cell.y + cell.size;
-    float minZ = cell.z;
-    float maxZ = cell.z + cell.size;
+    glm::vec3 minPoint(cell.x, cell.y, cell.z);
+    glm::vec3 maxPoint(cell.x + cell.size, cell.y + cell.size, cell.z + cell.size);
 
-    float closestX = std::clamp(0.0f, minX, maxX);
-    float closestY = std::clamp(0.0f, minY, maxY);
-    float closestZ = std::clamp(0.0f, minZ, maxZ);
+    float closestX = std::clamp(0.0f, minPoint.x, maxPoint.x);
+    float closestY = std::clamp(0.0f, minPoint.y, maxPoint.y);
+    float closestZ = std::clamp(0.0f, minPoint.z, maxPoint.z);
 
     float d = closestX * closestX + closestY * closestY + closestZ * closestZ;
 
     if (d > radius * radius) return Intersection::Outside;
 
-    float farthestX = std::max(std::abs(minX), std::abs(maxX));
-    float farthestY = std::max(std::abs(minY), std::abs(maxY));
-    float farthestZ = std::max(std::abs(minZ), std::abs(maxZ));
+    float farthestX = std::max(std::abs(minPoint.x), std::abs(maxPoint.x));
+    float farthestY = std::max(std::abs(minPoint.y), std::abs(maxPoint.y));
+    float farthestZ = std::max(std::abs(minPoint.z), std::abs(maxPoint.z));
 
     float farthestDistance = farthestX * farthestX + farthestY * farthestY + farthestZ * farthestZ;
 
@@ -85,4 +81,38 @@ SMCClassification Sphere::CheckIsInside(const glm::vec3& point) const {
     if (d < radius * radius) return SMCClassification::IN;
 
     return SMCClassification::OUT;
+}
+
+SMCClassification Sphere::CheckIsCellInside(const Cell& cell) const {
+    glm::vec3 minPoint(cell.x, cell.y, cell.z);
+    glm::vec3 maxPoint(cell.x + cell.size, cell.y + cell.size, cell.z + cell.size);
+
+    float closestX = std::clamp(0.0f, minPoint.x, maxPoint.x);
+    float closestY = std::clamp(0.0f, minPoint.y, maxPoint.y);
+    float closestZ = std::clamp(0.0f, minPoint.z, maxPoint.z);
+
+    float d = closestX * closestX + closestY * closestY + closestZ * closestZ;
+
+    if (d > radius * radius) return SMCClassification::OUT;
+
+    float farthestX = std::max(std::abs(minPoint.x), std::abs(maxPoint.x));
+    float farthestY = std::max(std::abs(minPoint.y), std::abs(maxPoint.y));
+    float farthestZ = std::max(std::abs(minPoint.z), std::abs(maxPoint.z));
+
+    float farthestDistance = farthestX * farthestX + farthestY * farthestY + farthestZ * farthestZ;
+
+    if (farthestDistance <= radius * radius) return SMCClassification::IN;
+
+    return SMCClassification::ON;
+}
+
+Cell Sphere::GetCSGBoundingBox() const {
+    float size = radius * 2.0f;
+
+    return {
+        -radius,
+        -radius,
+        -radius,
+        size
+    };
 }

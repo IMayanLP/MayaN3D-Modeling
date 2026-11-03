@@ -197,3 +197,42 @@ SMCClassification Cylinder::CheckIsInside(const glm::vec3& point) const {
 
     return SMCClassification::OUT;
 }
+
+SMCClassification Cylinder::CheckIsCellInside(const Cell& cell) const {
+    glm::vec3 minPoint(cell.x, cell.y, cell.z);
+    glm::vec3 maxPoint(cell.x + cell.size, cell.y + cell.size, cell.z + cell.size);
+
+    float halfHeight = height / 2.0f;
+
+    float cylinderMinY = -halfHeight;
+    float cylinderMaxY = halfHeight;
+
+    if (maxPoint.y <= cylinderMinY || minPoint.y >= cylinderMaxY) return SMCClassification::OUT;
+
+    float closestX = std::clamp(0.0f, minPoint.x, maxPoint.x);
+    float closestZ = std::clamp(0.0f, minPoint.z, maxPoint.z);
+
+    float d = closestX * closestX + closestZ * closestZ;
+
+    if (d >= radius * radius) return SMCClassification::OUT;
+
+    float farthestX = std::max(std::abs(minPoint.x), std::abs(maxPoint.x));
+    float farthestZ = std::max(std::abs(minPoint.z), std::abs(maxPoint.z));
+
+    float maxD = farthestX * farthestX + farthestZ * farthestZ;
+
+    if (minPoint.y >= cylinderMinY && maxPoint.y <= cylinderMaxY && maxD <= radius * radius) return SMCClassification::IN;
+
+    return SMCClassification::ON;
+}
+
+Cell Cylinder::GetCSGBoundingBox() const {
+    float size = std::max(height, radius * 2.0f);
+
+    return {
+        -size / 2.0f,
+        -size / 2.0f,
+        -size / 2.0f,
+        size
+    };
+}

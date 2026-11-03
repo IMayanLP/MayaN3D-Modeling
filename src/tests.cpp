@@ -174,20 +174,36 @@ int main() {
 
     std::unique_ptr<CSGNode> nodeA = CSG::CreatePrimitiveNode(sphereA);
     std::unique_ptr<CSGNode> nodeB = CSG::CreatePrimitiveNode(cube);
-
-    std::unique_ptr<CSGNode> differenceNode = CSG::CreateBooleanNode(
-        BooleanOperation::Difference,
-        std::move(nodeB),
-        std::move(nodeA));
+    std::unique_ptr<CSGNode> differenceNode = CSG::CreateBooleanNode(BooleanOperation::Difference, std::move(nodeB), std::move(nodeA));
 
     CSG differenceCSG;
     differenceCSG.SetRoot(std::move(differenceNode));
 
+    std::unique_ptr<CSGNode> root = differenceCSG.GetAndFreeRoot();
+
+    std::unique_ptr<CSGNode> rotateNode = CSG::CreateTransformNode(TransformType::Rotation, {glm::radians(45.0f), 0.0f, 0.0f}, std::move(root));
+    differenceCSG.SetRoot(std::move(rotateNode));
+
+    Cell boundingBox = differenceCSG.GetBoundingBox();
+
+    std::cout << "Bounding Box:\n";
+    std::cout << "X: " << boundingBox.x << '\n';
+    std::cout << "Y: " << boundingBox.y << '\n';
+    std::cout << "Z: " << boundingBox.z << '\n';
+    std::cout << "Size: " << boundingBox.size << '\n';
+
+    Octree tree = differenceCSG.GenerateOctree();
+
+    tree.setLabel("Teste a partir da CSG");
+    tree.setMaxLevel(5);
+
+    scene.addOctree(std::move(tree));
+
     RayCast rayCast;
-    std::vector<unsigned char> pixels = rayCast.Render(differenceCSG, camera, 800, 600, glm::vec3(1.0f, 0.0f, 0.0f));
+    std::vector<unsigned char> pixels = rayCast.Render(differenceCSG, camera, 400, 300, glm::vec3(1.0f, 0.0f, 0.0f));
     std::cout << "Pixels gerados: " << pixels.size() << '\n';
 
-    int result = stbi_write_png("files/images/RayCast.png",800,600,3,pixels.data(),800 * 3);
+    int result = stbi_write_png("files/images/RayCast.png",400,300,3,pixels.data(),400 * 3);
 
     if (result) std::cout << "Imagem salva com sucesso!\n";
     else std::cout << "Erro ao salvar a imagem.\n";

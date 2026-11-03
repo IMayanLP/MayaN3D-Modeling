@@ -34,17 +34,13 @@ Intersection Cube::CheckIntersection(const Cell& cell) const {
     float halfHeight = sizeY / 2.0f;
     float halfDepth = sizeZ / 2.0f;
 
-    if (localMax.x <= -halfWidth || localMin.x >= halfWidth ||
-        localMax.y <= -halfHeight || localMin.y >= halfHeight ||
-        localMax.z <= -halfDepth || localMin.z >= halfDepth) {
+    if (localMax.x <= -halfWidth || localMin.x >= halfWidth || localMax.y <= -halfHeight || localMin.y >= halfHeight || localMax.z <= -halfDepth || localMin.z >= halfDepth) {
         return Intersection::Outside;
-        }
+    }
 
-    if (localMin.x >= -halfWidth && localMax.x <= halfWidth &&
-        localMin.y >= -halfHeight && localMax.y <= halfHeight &&
-        localMin.z >= -halfDepth && localMax.z <= halfDepth) {
+    if (localMin.x >= -halfWidth && localMax.x <= halfWidth && localMin.y >= -halfHeight && localMax.y <= halfHeight && localMin.z >= -halfDepth && localMax.z <= halfDepth) {
         return Intersection::Inside;
-        }
+    }
 
     return Intersection::Intersecting;
 }
@@ -77,11 +73,7 @@ Cell Cube::GetBoundingBox() const {
         maxPoint = glm::max(maxPoint, point);
     }
 
-    float boundingSize = std::max({
-        maxPoint.x - minPoint.x,
-        maxPoint.y - minPoint.y,
-        maxPoint.z - minPoint.z
-    });
+    float boundingSize = std::max({maxPoint.x - minPoint.x, maxPoint.y - minPoint.y, maxPoint.z - minPoint.z});
 
     return {
         -boundingSize / 2.0f,
@@ -162,29 +154,51 @@ SMCClassification Cube::CheckIsInside(const glm::vec3& point) const {
     float halfDepth = sizeZ / 2.0f;
     float e = 1e-6f;
 
-    if (std::abs(std::abs(point.x) - halfWidth) <= e &&
-        std::abs(point.y) <= halfHeight + e &&
-        std::abs(point.z) <= halfDepth + e) {
+    if (std::abs(std::abs(point.x) - halfWidth) <= e && std::abs(point.y) <= halfHeight + e && std::abs(point.z) <= halfDepth + e) {
         return SMCClassification::ON;
-        }
+    }
 
-    if (std::abs(std::abs(point.y) - halfHeight) <= e &&
-        std::abs(point.x) <= halfWidth + e &&
-        std::abs(point.z) <= halfDepth + e) {
+    if (std::abs(std::abs(point.y) - halfHeight) <= e && std::abs(point.x) <= halfWidth + e && std::abs(point.z) <= halfDepth + e) {
         return SMCClassification::ON;
-        }
+    }
 
-    if (std::abs(std::abs(point.z) - halfDepth) <= e &&
-        std::abs(point.x) <= halfWidth + e &&
-        std::abs(point.y) <= halfHeight + e) {
+    if (std::abs(std::abs(point.z) - halfDepth) <= e && std::abs(point.x) <= halfWidth + e && std::abs(point.y) <= halfHeight + e) {
         return SMCClassification::ON;
-        }
+    }
 
-    if (std::abs(point.x) < halfWidth &&
-        std::abs(point.y) < halfHeight &&
-        std::abs(point.z) < halfDepth) {
+    if (std::abs(point.x) < halfWidth && std::abs(point.y) < halfHeight && std::abs(point.z) < halfDepth) {
         return SMCClassification::IN;
-        }
+    }
 
     return SMCClassification::OUT;
+}
+
+SMCClassification Cube::CheckIsCellInside(const Cell& cell) const {
+    glm::vec3 minPoint(cell.x, cell.y, cell.z);
+    glm::vec3 maxPoint(cell.x + cell.size, cell.y + cell.size, cell.z + cell.size);
+
+    float halfWidth = sizeX / 2.0f;
+    float halfHeight = sizeY / 2.0f;
+    float halfDepth = sizeZ / 2.0f;
+
+    if (maxPoint.x <= -halfWidth || minPoint.x >= halfWidth || maxPoint.y <= -halfHeight || minPoint.y >= halfHeight || maxPoint.z <= -halfDepth || minPoint.z >= halfDepth) {
+        return SMCClassification::OUT;
+    }
+
+    if (minPoint.x >= -halfWidth && maxPoint.x <= halfWidth && minPoint.y >= -halfHeight && maxPoint.y <= halfHeight && minPoint.z >= -halfDepth && maxPoint.z <= halfDepth) {
+        return SMCClassification::IN;
+    }
+
+    return SMCClassification::ON;
+}
+
+Cell Cube::GetCSGBoundingBox() const {
+    float size = std::max({sizeX, sizeY, sizeZ});
+
+    return {
+        -size/2,
+        -size/2,
+        -size/2,
+        size
+    };
 }

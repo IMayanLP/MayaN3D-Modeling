@@ -224,3 +224,53 @@ SMCClassification Cone::CheckIsInside(const glm::vec3& point) const {
 
     return SMCClassification::OUT;
 }
+
+SMCClassification Cone::CheckIsCellInside(const Cell& cell) const {
+    glm::vec3 minPoint(cell.x, cell.y, cell.z);
+    glm::vec3 maxPoint(cell.x + cell.size, cell.y + cell.size, cell.z + cell.size);
+
+    float halfHeight = height / 2.0f;
+
+    float coneMinY = -halfHeight;
+    float coneMaxY = halfHeight;
+
+    if (maxPoint.y <= coneMinY || minPoint.y >= coneMaxY) return SMCClassification::OUT;
+
+    float tMin = std::max(minPoint.y, coneMinY);
+    float tMax = std::min(maxPoint.y, coneMaxY);
+
+    float radiusAtMinY = radius * (coneMaxY - tMin) / height;
+    float radiusAtMaxY = radius * (coneMaxY - tMax) / height;
+
+    float closestX = std::clamp(0.0f, minPoint.x, maxPoint.x);
+    float closestZ = std::clamp(0.0f, minPoint.z, maxPoint.z);
+
+    float d = closestX * closestX + closestZ * closestZ;
+    float maxRadius = std::max(radiusAtMinY, radiusAtMaxY);
+
+    if (d >= maxRadius * maxRadius) return SMCClassification::OUT;
+
+    float farthestX = std::max(std::abs(minPoint.x), std::abs(maxPoint.x));
+    float farthestZ = std::max(std::abs(minPoint.z), std::abs(maxPoint.z));
+
+    float maxD = farthestX * farthestX + farthestZ * farthestZ;
+    float minRadius = std::min(radiusAtMinY, radiusAtMaxY);
+
+    if (minPoint.y >= coneMinY && maxPoint.y <= coneMaxY &&
+        maxD <= minRadius * minRadius) {
+        return SMCClassification::IN;
+        }
+
+    return SMCClassification::ON;
+}
+
+Cell Cone::GetCSGBoundingBox() const {
+    float size = std::max(height, radius * 2);
+
+    return {
+        -size/2,
+        -size/2,
+        -size/2,
+        size
+    };
+}

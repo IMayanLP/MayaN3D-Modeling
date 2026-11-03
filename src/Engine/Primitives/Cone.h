@@ -11,6 +11,8 @@ class Cone : public Primitive {
         std::unique_ptr<Primitive> Clone() const override;
         std::vector<RayIntersection> IntersectRay(const Ray&) const override;
         SMCClassification CheckIsInside(const glm::vec3&) const override;
+        SMCClassification CheckIsCellInside(const Cell&) const override;
+        Cell GetCSGBoundingBox() const override;
 
     private:
         float radius;
