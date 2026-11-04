@@ -60,8 +60,12 @@ class CSG {
         static std::unique_ptr<CSGNode> CreateBooleanNode(BooleanOperation, std::unique_ptr<CSGNode>, std::unique_ptr<CSGNode>);
         static std::unique_ptr<CSGNode> CreateTransformNode(TransformType, glm::vec3, std::unique_ptr<CSGNode>);
 
+        void setLabel(std::string);
+        std::string getLabel() const;
+
     private:
         void Aux(Node*, int);
 
         std::unique_ptr<CSGNode> root;
+        std::string label = "";
 };

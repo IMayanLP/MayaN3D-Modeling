@@ -22,9 +22,11 @@ enum class ToolType {
     Area,
     Move,
     Scale,
+    Rotate,
     Camera,
     Import,
-    Export
+    Export,
+    Render
 };
 
 enum class Axys {
@@ -33,16 +35,44 @@ enum class Axys {
     Z
 };
 
+enum class ObjectToolCollection {
+    Octree,
+    CSG,
+    BREP
+};
+
 class Interface {
     public:
         void Render(float, const std::vector<std::string>&);
 
         // callbacks
+        // octree
         std::function<void(std::string, float, int)> OnCreateSphere;
         std::function<void(std::string, float, float, float, int, float, float, float)> OnCreateCube;
         std::function<void(std::string, float, float, int, float, float, float)> OnCreateCylinder;
         std::function<void(std::string, float, float, int, float, float, float)> OnCreateCone;
 
+        std::function<void(Axys ,float, bool)> OnMoveObject;
+        std::function<void(float, bool)> OnScaleObject;
+
+        std::function<void(std::string, int, bool)> OnUnion;
+        std::function<void(std::string, int, bool)> OnIntersection;
+
+        // CSG
+        std::function<void(std::string, float)> OnCreateCSGSphere;
+        std::function<void(std::string, float, float, float)> OnCreateCSGCube;
+        std::function<void(std::string, float, float)> OnCreateCSGCylinder;
+        std::function<void(std::string, float, float)> OnCreateCSGCone;
+
+        std::function<void(std::string)> OnCSGUnion;
+        std::function<void(std::string)> OnCSGIntersection;
+        std::function<void(std::string)> OnCSGDifference;
+
+        std::function<void(glm::vec3)> OnMoveCSGObject;
+        std::function<void(glm::vec3)> OnScaleCSGObject;
+        std::function<void(glm::vec3)> OnRotateCSGObject;
+
+        //
         std::function<void(int)> OnSelectObject;
         std::function<void(int)> OnSelectSecondObject;
 
@@ -55,26 +85,25 @@ class Interface {
         std::function<void()> ResetRotation;
         std::function<void()> ResetZoom;
 
-        std::function<void(Axys ,float, bool)> OnMoveObject;
-        std::function<void(float, bool)> OnScaleObject;
         std::function<float()> OnCalculateVolume;
         std::function<float()> OnCalculateArea;
 
-        std::function<void(std::string, int, bool)> OnUnion;
-        std::function<void(std::string, int, bool)> OnIntersection;
-
         std::function<void(std::string fileName)> OnExportObject;
         std::function<void(std::string fileName)> OnImportObject;
+        std::function<void(std::string fileName, int, int)> OnRenderObject;
 
         void ResetSelection();
         void ResetInputs();
 
     private:
-        void RenderToolsSection(float);
+        void RenderCollectionToolsSection();
+        void RenderToolsSection();
         void RenderObjectListSection(const std::vector<std::string>&);
         void RenderDetailsSection(const std::vector<std::string>&);
 
+        ObjectToolCollection selectCollection = ObjectToolCollection::Octree;
         ToolType selectedTool = ToolType::None;
+
         int selectedObjectIndex = -1;
         int secondSelectedObjectIndex = -1;
 
@@ -88,6 +117,7 @@ class Interface {
         float translation = 0.0f;
         Axys selectedAxys = Axys::X;
         bool useGlobalTransform = false;
+        glm::vec3 csgTransformValues = {0.0f, 0.0f, 0.0f};
         // defaults
         float defaultScale = 1.0f;
         float defaultTranslation = 0.0f;
@@ -140,4 +170,6 @@ class Interface {
         std::string defaultExportFileName = "";
         std::string selectedImportFile = "";
         std::string defaultSelectedImportFile = "";
+        int renderResolutionX = 800;
+        int renderResolutionY = 600;
 };

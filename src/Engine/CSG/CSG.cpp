@@ -3,6 +3,7 @@
 #include <cmath>
 #include "Ray.h"
 #include "SMC.h"
+#include <iostream>
 
 void CSG::SetRoot(std::unique_ptr<CSGNode> node) {
     root = std::move(node);
@@ -14,6 +15,13 @@ const CSGNode* CSG::GetRoot() const {
 
 std::unique_ptr<CSGNode> CSG::GetAndFreeRoot() {
     return std::move(root);
+}
+
+void CSG::setLabel(std::string name) {
+    label = name;
+}
+std::string CSG::getLabel() const {
+    return label;
 }
 
 std::unique_ptr<CSGNode> CSG::CreatePrimitiveNode(const Primitive& primitive) {
@@ -287,29 +295,28 @@ Cell CSGNode::GetBoundingBox() {
         glm::vec3 rMin(rBoundingBox.x, rBoundingBox.y, rBoundingBox.z);
         glm::vec3 rMax(rBoundingBox.x + rBoundingBox.size, rBoundingBox.y + rBoundingBox.size, rBoundingBox.z + rBoundingBox.size);
 
-        glm::vec3 minPoint = glm::max(lMin, rMin);
-        glm::vec3 maxPoint = glm::min(lMax, rMax);
-
         if (booleanOperation == BooleanOperation::Union) {
+            glm::vec3 minPoint = glm::min(lMin, rMin);
+            glm::vec3 maxPoint = glm::max(lMax, rMax);
             float boundingSize = std::max({maxPoint.x - minPoint.x, maxPoint.y - minPoint.y, maxPoint.z - minPoint.z});
 
-            return {(minPoint.x + maxPoint.x - boundingSize) / 2.0f,
+            Cell cell = {(minPoint.x + maxPoint.x - boundingSize) / 2.0f,
                 (minPoint.y + maxPoint.y - boundingSize) / 2.0f,
                 (minPoint.z + maxPoint.z - boundingSize) / 2.0f,
                 boundingSize
             };
+
+            return cell;
         }
 
         if (booleanOperation == BooleanOperation::Intersection) {
+            glm::vec3 minPoint = glm::max(lMin, rMin);
+            glm::vec3 maxPoint = glm::min(lMax, rMax);
             if (minPoint.x > maxPoint.x || minPoint.y > maxPoint.y || minPoint.z > maxPoint.z) {
                 return {0.0f, 0.0f, 0.0f, 0.0f};
             }
 
-            float boundingSize = std::max({
-                maxPoint.x - minPoint.x,
-                maxPoint.y - minPoint.y,
-                maxPoint.z - minPoint.z
-            });
+            float boundingSize = std::max({maxPoint.x - minPoint.x, maxPoint.y - minPoint.y, maxPoint.z - minPoint.z});
 
             return {
                 (minPoint.x + maxPoint.x - boundingSize) / 2.0f,
@@ -329,9 +336,6 @@ Cell CSGNode::GetBoundingBox() {
 
 Octree CSG::GenerateOctree() {
     Octree octree;
-
-    if (!root) return octree;
-
     octree.root->cell = GetBoundingBox();
 
     Aux(octree.root.get(), 0);

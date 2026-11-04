@@ -18,32 +18,48 @@ bool Scene::getShowCell() const {
     return showCell;
 }
 
-void Scene::setSelectedOctree(int index) {
-    selectedOctree = index;
+void Scene::setSelectedObject(int index) {
+    selectedObject = index;
 }
 
-void Scene::setSecondSelectedOctree(int index) {
-    secondSelectedOctree = index;
+void Scene::setSecondSelectedObject(int index) {
+    secondSelectedObject = index;
 }
 
 void Scene::resetSelectedIndex() {
-    secondSelectedOctree = -1;
+    secondSelectedObject = -1;
 }
 
 void Scene::resetSecondSelectedIndex() {
-    secondSelectedOctree = -1;
+    secondSelectedObject = -1;
 }
 
 void Scene::setSceneState(SceneState newState) {
     state = newState;
 }
 
+ObjectType Scene::getSelectedObjectType() const {
+    return objects.at(selectedObject).type;
+}
+
+ObjectType Scene::getSecondSelectedObjectType() const {
+    return objects.at(secondSelectedObject).type;
+}
+
 Octree& Scene::getSelectedOctree() {
-    return objects.at(selectedOctree).octree;
+    return objects.at(selectedObject).octree;
 }
 
 Octree& Scene::getSecondSelectedOctree() {
-    return objects.at(secondSelectedOctree).octree;
+    return objects.at(secondSelectedObject).octree;
+}
+
+CSG& Scene::getSelectedCSG() {
+    return objects.at(selectedObject).csg;
+}
+
+CSG& Scene::getSecondSelectedCSG() {
+    return objects.at(secondSelectedObject).csg;
 }
 
 void Scene::addOctree(Octree&& octree) {
@@ -53,33 +69,61 @@ void Scene::addOctree(Octree&& octree) {
     std::cout << "Nivel maximo: " << octree.GetMaxLevel() << '\n';
 
     Object object;
+    object.type = ObjectType::Octree;
     object.mesh = std::move(mesh);
     object.octree = std::move(octree);
     objects.push_back(std::move(object));
 }
 
-std::size_t Scene::getOctreesSize() const {
+void Scene::addCSG(CSG&& csg) {
+    Object object;
+    object.type = ObjectType::CSG;
+    object.csg = std::move(csg);
+
+    object.octree = object.csg.GenerateOctree();
+    std::vector<Triangle> mesh = object.octree.GenerateMesh();
+    object.mesh = std::move(mesh);
+
+    objects.push_back(std::move(object));
+}
+
+void Scene::updateOctreeFromSelectedCSG() {
+    if (objects[selectedObject].type == ObjectType::CSG) {
+        objects[selectedObject].octree = objects[selectedObject].csg.GenerateOctree();
+        std::vector<Triangle> mesh = objects[selectedObject].octree.GenerateMesh();
+        objects[selectedObject].mesh = std::move(mesh);
+
+    }
+}
+
+std::size_t Scene::getObjectsSize() const {
     return objects.size();
 }
 
-void Scene::removeSelectedOctrees() {
-    if (selectedOctree > secondSelectedOctree) std::swap(selectedOctree, secondSelectedOctree);
+void Scene::removeSelectedObjects() {
+    if (selectedObject > secondSelectedObject) std::swap(selectedObject, secondSelectedObject);
 
-    objects.erase(objects.begin() + secondSelectedOctree);
-    objects.erase(objects.begin() + selectedOctree);
+    objects.erase(objects.begin() + secondSelectedObject);
+    objects.erase(objects.begin() + selectedObject);
 
-    selectedOctree = -1;
-    secondSelectedOctree = -1;
+    selectedObject = -1;
+    secondSelectedObject = -1;
 }
 
-void Scene::removeSelectedOctree() {
-    objects.erase(objects.begin() + selectedOctree);
+void Scene::removeSelectedObject() {
+    objects.erase(objects.begin() + selectedObject);
 
-    selectedOctree = -1;
+    selectedObject = -1;
+}
+
+void Scene::removeSecondSelectedObject() {
+    objects.erase(objects.begin() + secondSelectedObject);
+
+    secondSelectedObject = -1;
 }
 
 void Scene::toggleSelectedVisibility() {
-    if (selectedOctree > -1) objects[selectedOctree].visible = !objects[selectedOctree].visible;
+    if (selectedObject > -1) objects[selectedObject].visible = !objects[selectedObject].visible;
 }
 
 void Scene::RenderScene(Renderer& renderer, Shader& shader) {
@@ -97,9 +141,12 @@ std::vector<std::string> Scene::getObjectNames() const {
     std::vector<std::string> objectNames;
 
     for (const Object& o : objects) {
-        std::string label = o.octree.getLabel();
+        std::string objType = o.type == ObjectType::Octree ? "[Octree]" : "[CSG]";
+        std::string label;
+        if (o.type == ObjectType::Octree) label = o.octree.getLabel();
+        else if (o.type == ObjectType::CSG) label = o.csg.getLabel();
         if (label.empty()) label = "unnamed";
-        objectNames.push_back(label);
+        objectNames.push_back(objType + " " + label);
     }
 
     return objectNames;

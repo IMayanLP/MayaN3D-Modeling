@@ -1,6 +1,10 @@
 ﻿#include "Renderer.h"
 #include <glm/gtc/matrix_transform.hpp>
 
+#include "imgui.h"
+#include "RayCast.h"
+#include <iostream>
+
 Renderer::Renderer() {
     float defaultCell[] = {
         -0.5f, -0.5f,  0.5f,   0.0f, 0.0f, 1.0f,

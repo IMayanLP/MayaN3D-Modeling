@@ -92,17 +92,17 @@ int main() {
 
     // Callbacks
     UI.OnSelectObject = [&scene](int index) {
-        scene.setSelectedOctree(index);
+        scene.setSelectedObject(index);
     };
 
     UI.OnSelectSecondObject = [&scene](int index) {
-        scene.setSecondSelectedOctree(index);
+        scene.setSecondSelectedObject(index);
     };
 
     UI.OnCreateSphere = [&scene](std::string label, float radius, int maxLevel) {
         Octree newOctree;
         Sphere sphere(radius);
-        if (label.empty()) label = "(Esfera) Object " + std::to_string(scene.getOctreesSize());
+        if (label.empty()) label = "(Esfera) Object " + std::to_string(scene.getObjectsSize());
         newOctree.setLabel(label);
         newOctree.setMaxLevel(maxLevel);
         newOctree.Generate(sphere);
@@ -110,11 +110,23 @@ int main() {
         scene.addOctree(std::move(newOctree));
     };
 
+    UI.OnCreateCSGSphere = [&scene](std::string label, float radius) {
+        CSG newCSG;
+        Sphere sphere(radius);
+        if (label.empty()) label = "(Esfera) Object " + std::to_string(scene.getObjectsSize());
+        std::unique_ptr<CSGNode> sphereNode = CSG::CreatePrimitiveNode(sphere);
+        newCSG.SetRoot(std::move(sphereNode));
+        newCSG.setLabel(label);
+
+        scene.addCSG(std::move(newCSG));
+    };
+
+
     UI.OnCreateCube = [&scene](std::string label, float sizeX, float sizeY, float sizeZ, int maxLevel, float rotationX, float rotationY, float rotationZ) {
         Octree newOctree;
         Cube cube(sizeX, sizeY, sizeZ);
         cube.SetRotation(rotationX, rotationY, rotationZ);
-        if (label.empty()) label = "(Bloco) Object " + std::to_string(scene.getOctreesSize());
+        if (label.empty()) label = "(Bloco) Object " + std::to_string(scene.getObjectsSize());
         newOctree.setLabel(label);
         newOctree.setMaxLevel(maxLevel);
         newOctree.Generate(cube);
@@ -122,11 +134,22 @@ int main() {
         scene.addOctree(std::move(newOctree));
     };
 
+    UI.OnCreateCSGCube = [&scene](std::string label, float sizeX, float sizeY, float sizeZ) {
+        CSG newCSG;
+        Cube cube(sizeX, sizeY, sizeZ);
+        if (label.empty()) label = "(Bloco) Object " + std::to_string(scene.getObjectsSize());
+        std::unique_ptr<CSGNode> cubeNode = CSG::CreatePrimitiveNode(cube);
+        newCSG.SetRoot(std::move(cubeNode));
+        newCSG.setLabel(label);
+
+        scene.addCSG(std::move(newCSG));
+    };
+
     UI.OnCreateCylinder = [&scene](std::string label, float radius, float height, int maxLevel, float rotationX, float rotationY, float rotationZ) {
         Octree newOctree;
         Cylinder cylinder(radius, height);
         cylinder.SetRotation(rotationX, rotationY, rotationZ);
-        if (label.empty()) label = "(Cilindro) Object " + std::to_string(scene.getOctreesSize());
+        if (label.empty()) label = "(Cilindro) Object " + std::to_string(scene.getObjectsSize());
         newOctree.setLabel(label);
         newOctree.setMaxLevel(maxLevel);
         newOctree.Generate(cylinder);
@@ -134,11 +157,22 @@ int main() {
         scene.addOctree(std::move(newOctree));
     };
 
+    UI.OnCreateCSGCylinder = [&scene](std::string label, float radius, float height) {
+        CSG newCSG;
+        Cylinder cylinder(radius, height);
+        if (label.empty()) label = "(Cilindro) Object " + std::to_string(scene.getObjectsSize());
+        std::unique_ptr<CSGNode> cylinderNode = CSG::CreatePrimitiveNode(cylinder);
+        newCSG.SetRoot(std::move(cylinderNode));
+        newCSG.setLabel(label);
+
+        scene.addCSG(std::move(newCSG));
+    };
+
     UI.OnCreateCone = [&scene](std::string label, float radius, float height, int maxLevel, float rotationX, float rotationY, float rotationZ) {
         Octree newOctree;
         Cone cone(radius, height);
         cone.SetRotation(rotationX, rotationY, rotationZ);
-        if (label.empty()) label = "(Cone) Object " + std::to_string(scene.getOctreesSize());
+        if (label.empty()) label = "(Cone) Object " + std::to_string(scene.getObjectsSize());
         newOctree.setLabel(label);
         newOctree.setMaxLevel(maxLevel);
         newOctree.Generate(cone);
@@ -146,21 +180,73 @@ int main() {
         scene.addOctree(std::move(newOctree));
     };
 
+    UI.OnCreateCSGCone = [&scene](std::string label, float radius, float height) {
+        CSG newCSG;
+        Cone cone(radius, height);
+        if (label.empty()) label = "(Cone) Object " + std::to_string(scene.getObjectsSize());
+        std::unique_ptr<CSGNode> coneNode = CSG::CreatePrimitiveNode(cone);
+        newCSG.SetRoot(std::move(coneNode));
+        newCSG.setLabel(label);
+
+        scene.addCSG(std::move(newCSG));
+    };
+
     UI.OnMoveObject = [&scene](Axys axis, float value, bool useGlobalTransform) {
-        glm::vec3 t = scene.getSelectedOctree().GetTranslation();
+        if (scene.getSelectedObjectType() == ObjectType::Octree) {
+            glm::vec3 t = scene.getSelectedOctree().GetTranslation();
 
-        switch (axis) {
-            case Axys::X: t.x = useGlobalTransform ? value : t.x + value; break;
-            case Axys::Y: t.y = useGlobalTransform ? value : t.y + value; break;
-            case Axys::Z: t.z = useGlobalTransform ? value : t.z + value; break;
+            switch (axis) {
+                case Axys::X: t.x = useGlobalTransform ? value : t.x + value; break;
+                case Axys::Y: t.y = useGlobalTransform ? value : t.y + value; break;
+                case Axys::Z: t.z = useGlobalTransform ? value : t.z + value; break;
+            }
+
+            scene.getSelectedOctree().SetTranslation(t.x, t.y, t.z);
         }
+    };
 
-        scene.getSelectedOctree().SetTranslation(t.x, t.y, t.z);
+    UI.OnMoveCSGObject = [&scene](glm::vec3 t) {
+        if (scene.getSelectedObjectType() == ObjectType::CSG) {
+            std::unique_ptr<CSGNode> root = scene.getSelectedCSG().GetAndFreeRoot();
+
+            std::unique_ptr<CSGNode> translateNode = CSG::CreateTransformNode(TransformType::Translation, t, std::move(root));
+            scene.getSelectedCSG().SetRoot(std::move(translateNode));
+
+            scene.updateOctreeFromSelectedCSG();
+        }
     };
 
     UI.OnScaleObject = [&scene](float scale, bool useGlobalTransform) {
-        if (!useGlobalTransform) scale = scene.getSelectedOctree().GetScale() * scale;
-        scene.getSelectedOctree().SetScale(scale);
+        if (scene.getSelectedObjectType() == ObjectType::Octree) {
+            if (!useGlobalTransform) scale = scene.getSelectedOctree().GetScale() * scale;
+            scene.getSelectedOctree().SetScale(scale);
+        }
+    };
+
+    UI.OnScaleCSGObject = [&scene](glm::vec3 t) {
+        if (scene.getSelectedObjectType() == ObjectType::CSG) {
+            if (t.x == 0.0f || t.y == 0.0f || t.z == 0.0f) return;
+            std::unique_ptr<CSGNode> root = scene.getSelectedCSG().GetAndFreeRoot();
+
+            std::unique_ptr<CSGNode> scaleNode = CSG::CreateTransformNode(TransformType::Scale, t, std::move(root));
+            scene.getSelectedCSG().SetRoot(std::move(scaleNode));
+
+            scene.updateOctreeFromSelectedCSG();
+        }
+    };
+
+    UI.OnRotateCSGObject = [&scene](glm::vec3 t) {
+        if (scene.getSelectedObjectType() == ObjectType::CSG) {
+            std::cout << "t.x:" << t.x << " | Em rad: " << glm::radians(t.x) << std::endl;
+            std::cout << "t.y:" << t.y << " | Em rad: " << glm::radians(t.y) << std::endl;
+            std::cout << "t.z:" << t.z << " | Em rad: " << glm::radians(t.z) << std::endl;
+            std::unique_ptr<CSGNode> root = scene.getSelectedCSG().GetAndFreeRoot();
+
+            std::unique_ptr<CSGNode> rotationNode = CSG::CreateTransformNode(TransformType::Rotation, {glm::radians(t.x), glm::radians(t.y), glm::radians(t.z)}, std::move(root));
+            scene.getSelectedCSG().SetRoot(std::move(rotationNode));
+
+            scene.updateOctreeFromSelectedCSG();
+        }
     };
 
     UI.OnCalculateVolume = [&scene]() -> float {
@@ -184,31 +270,86 @@ int main() {
     };
 
     UI.OnUnion = [&scene, &UI](std::string label, int maxLevel, bool useDynamicLevel) {
-        Octree newOctree = Octree::ApplyUnion(scene.getSelectedOctree(), scene.getSecondSelectedOctree(), maxLevel, useDynamicLevel);
-        newOctree.setLabel(label);
+        if (scene.getSelectedObjectType() == ObjectType::Octree && scene.getSecondSelectedObjectType() == ObjectType::Octree) {
+            Octree newOctree = Octree::ApplyUnion(scene.getSelectedOctree(), scene.getSecondSelectedOctree(), maxLevel, useDynamicLevel);
+            newOctree.setLabel(label);
 
-        scene.removeSelectedOctrees();
-        scene.addOctree(std::move(newOctree));
-        scene.resetSelectedIndex();
-        scene.resetSecondSelectedIndex();
+            scene.removeSelectedObjects();
+            scene.addOctree(std::move(newOctree));
+            scene.resetSelectedIndex();
+            scene.resetSecondSelectedIndex();
+        }
+
+        UI.ResetSelection();
+    };
+
+    UI.OnCSGUnion = [&scene, &UI](std::string label) {
+        if (scene.getSelectedObjectType() == ObjectType::CSG && scene.getSecondSelectedObjectType() == ObjectType::CSG) {
+            if (!label.empty()) scene.getSelectedCSG().setLabel(label);
+            std::unique_ptr<CSGNode> rootA = scene.getSelectedCSG().GetAndFreeRoot();
+            std::unique_ptr<CSGNode> rootB = scene.getSecondSelectedCSG().GetAndFreeRoot();
+
+            std::unique_ptr<CSGNode> unionNode = CSG::CreateBooleanNode(BooleanOperation::Union, std::move(rootA), std::move(rootB));
+            scene.getSelectedCSG().SetRoot(std::move(unionNode));
+            scene.updateOctreeFromSelectedCSG();
+
+            scene.removeSecondSelectedObject();
+            scene.resetSelectedIndex();
+        }
 
         UI.ResetSelection();
     };
 
     UI.OnIntersection = [&scene, &UI](std::string label, int maxLevel, bool useDynamicLevel) {
-        Octree newOctree = Octree::ApplyIntersection(scene.getSelectedOctree(), scene.getSecondSelectedOctree(), maxLevel, useDynamicLevel);
-        newOctree.setLabel(label);
+        if (scene.getSelectedObjectType() == ObjectType::Octree && scene.getSecondSelectedObjectType() == ObjectType::Octree) {
+            Octree newOctree = Octree::ApplyIntersection(scene.getSelectedOctree(), scene.getSecondSelectedOctree(), maxLevel, useDynamicLevel);
+            newOctree.setLabel(label);
 
-        scene.removeSelectedOctrees();
-        scene.addOctree(std::move(newOctree));
-        scene.resetSelectedIndex();
-        scene.resetSecondSelectedIndex();
+            scene.removeSelectedObjects();
+            scene.addOctree(std::move(newOctree));
+            scene.resetSelectedIndex();
+            scene.resetSecondSelectedIndex();
+
+            UI.ResetSelection();
+        }
+    };
+
+    UI.OnCSGIntersection = [&scene, &UI](std::string label) {
+        if (scene.getSelectedObjectType() == ObjectType::CSG && scene.getSecondSelectedObjectType() == ObjectType::CSG) {
+            if (!label.empty()) scene.getSelectedCSG().setLabel(label);
+            std::unique_ptr<CSGNode> rootA = scene.getSelectedCSG().GetAndFreeRoot();
+            std::unique_ptr<CSGNode> rootB = scene.getSecondSelectedCSG().GetAndFreeRoot();
+
+            std::unique_ptr<CSGNode> intersectionNode = CSG::CreateBooleanNode(BooleanOperation::Intersection, std::move(rootA), std::move(rootB));
+            scene.getSelectedCSG().SetRoot(std::move(intersectionNode));
+            scene.updateOctreeFromSelectedCSG();
+
+            scene.removeSecondSelectedObject();
+            scene.resetSelectedIndex();
+        }
+
+        UI.ResetSelection();
+    };
+
+    UI.OnCSGDifference = [&scene, &UI](std::string label) {
+        if (scene.getSelectedObjectType() == ObjectType::CSG && scene.getSecondSelectedObjectType() == ObjectType::CSG) {
+            if (!label.empty()) scene.getSelectedCSG().setLabel(label);
+            std::unique_ptr<CSGNode> rootA = scene.getSelectedCSG().GetAndFreeRoot();
+            std::unique_ptr<CSGNode> rootB = scene.getSecondSelectedCSG().GetAndFreeRoot();
+
+            std::unique_ptr<CSGNode> differenceNode = CSG::CreateBooleanNode(BooleanOperation::Difference, std::move(rootA), std::move(rootB));
+            scene.getSelectedCSG().SetRoot(std::move(differenceNode));
+            scene.updateOctreeFromSelectedCSG();
+
+            scene.removeSecondSelectedObject();
+            scene.resetSelectedIndex();
+        }
 
         UI.ResetSelection();
     };
 
     UI.OnDeleteObject = [&scene, &UI]() {
-        scene.removeSelectedOctree();
+        scene.removeSelectedObject();
 
         scene.resetSelectedIndex();
         UI.ResetSelection();
@@ -249,44 +390,21 @@ int main() {
         scene.addOctree(std::move(newOctree));
     };
 
+    UI.OnRenderObject = [&scene, &camera](std::string fileName, int resolutionX, int resolutionY) {
+        RayCast rayCast;
+
+        std::vector<unsigned char> pixels = rayCast.Render(scene.getSelectedCSG(), camera, resolutionX, resolutionY, glm::vec3(1.0f, 0.0f, 0.0f));
+        std::cout << "Pixels gerados: " << pixels.size() << '\n';
+
+        std::string filename = "files/images/" + fileName + ".png";
+        int result = stbi_write_png(filename.c_str(),resolutionX,resolutionY,3,pixels.data(),resolutionX * 3);
+
+        if (result) std::cout << "Imagem salva com sucesso!\n";
+        else std::cout << "Erro ao salvar a imagem.\n";
+    };
+
     float deltaTime = 0.0f;
     float lastFrame = 0.0f;
-
-
-
-    Sphere sphereA(1);
-    Cube cube(1.7f, 1.7f, 1.7f);
-
-    std::unique_ptr<CSGNode> nodeA = CSG::CreatePrimitiveNode(sphereA);
-    std::unique_ptr<CSGNode> nodeB = CSG::CreatePrimitiveNode(cube);
-    std::unique_ptr<CSGNode> differenceNode = CSG::CreateBooleanNode(BooleanOperation::Difference, std::move(nodeB), std::move(nodeA));
-
-    CSG differenceCSG;
-    differenceCSG.SetRoot(std::move(differenceNode));
-
-    std::unique_ptr<CSGNode> root = differenceCSG.GetAndFreeRoot();
-
-    std::unique_ptr<CSGNode> rotateNode = CSG::CreateTransformNode(TransformType::Rotation, {glm::radians(45.0f), 0.0f, 0.0f}, std::move(root));
-    differenceCSG.SetRoot(std::move(rotateNode));
-
-    Cell boundingBox = differenceCSG.GetBoundingBox();
-
-    std::cout << "Bounding Box:\n";
-    std::cout << "X: " << boundingBox.x << '\n';
-    std::cout << "Y: " << boundingBox.y << '\n';
-    std::cout << "Z: " << boundingBox.z << '\n';
-    std::cout << "Size: " << boundingBox.size << '\n';
-
-    Octree tree = differenceCSG.GenerateOctree();
-
-    tree.setLabel("Teste a partir da CSG");
-    tree.setMaxLevel(5);
-
-    scene.addOctree(std::move(tree));
-
-    RayCast rayCast;
-
-
 
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();

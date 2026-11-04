@@ -45,6 +45,9 @@ void Interface::ResetInputs() {
 
     exportFileName = defaultExportFileName;
     selectedImportFile = defaultSelectedImportFile;
+
+    renderResolutionX = 800;
+    renderResolutionY = 600;
 }
 
 void Interface::Render(float navBarSize, const std::vector<std::string>& objectNames) {
@@ -60,10 +63,16 @@ void Interface::Render(float navBarSize, const std::vector<std::string>& objectN
     ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.114f, 0.114f, 0.114f, 1.0f));
     ImGui::BeginChild("ToolsPanel", ImVec2(navBarSize, 0.0f), true);
 
+    ImGui::Text("COLEÇÃO DE FERRAMENTAS");
+    ImGui::Separator();
+
+    RenderCollectionToolsSection();
+    ImGui::Separator();
+
     ImGui::Text("FERRAMENTAS");
     ImGui::Separator();
 
-    RenderToolsSection(navBarSize);
+    RenderToolsSection();
     ImGui::Separator();
     RenderObjectListSection(objectNames);
     ImGui::Separator();
@@ -75,48 +84,96 @@ void Interface::Render(float navBarSize, const std::vector<std::string>& objectN
     ImGui::End();
 }
 
-void Interface::RenderToolsSection(float navBarSize) {
+void Interface::RenderCollectionToolsSection() {
     const float spacing    = ImGui::GetStyle().ItemSpacing.x;
     const float availWidth = ImGui::GetContentRegionAvail().x;
     const ImVec2 buttonSize((availWidth - spacing * 3.0f) / 4.0f, 40.0f);
 
-    // primitivas
-    if (ImGui::Button("Esfera", buttonSize)) selectedTool = ToolType::Sphere;
+    if (ImGui::Button("Octree", buttonSize)) selectCollection = ObjectToolCollection::Octree;
     ImGui::SameLine();
-    if (ImGui::Button("Cubo", buttonSize)) selectedTool = ToolType::Cube;
+    if (ImGui::Button("CSG", buttonSize)) selectCollection = ObjectToolCollection::CSG;
     ImGui::SameLine();
-    if (ImGui::Button("Cone", buttonSize)) selectedTool = ToolType::Cone;
-    ImGui::SameLine();
-    if (ImGui::Button("Cilindro", buttonSize)) selectedTool = ToolType::Cylinder;
+    if (ImGui::Button("BRep", buttonSize)) selectCollection = ObjectToolCollection::BREP;
 
-    // operações
-    if (ImGui::Button("Uniao", buttonSize)) selectedTool = ToolType::Union;
-    ImGui::SameLine();
-    if (ImGui::Button("Intersec.", buttonSize)) selectedTool = ToolType::Intersection;
-    ImGui::SameLine();
-    if (ImGui::Button("Volume", buttonSize)) selectedTool = ToolType::Volume;
-    ImGui::SameLine();
-    if (ImGui::Button("Area", buttonSize)) selectedTool = ToolType::Area;
+}
 
-    // ferramentas
-    if (ImGui::Button("Mover", buttonSize)) selectedTool = ToolType::Move;
-    ImGui::SameLine();
-    if (ImGui::Button("Escalar", buttonSize)) selectedTool = ToolType::Scale;
-    ImGui::SameLine();
-    if (ImGui::Button("Exportar", buttonSize)) selectedTool = ToolType::Export;
-    ImGui::SameLine();
-    if (ImGui::Button("Importar", buttonSize)) selectedTool = ToolType::Import;
 
-    // visualização
-    if (ImGui::Button("Wireframe", buttonSize) && toggleWireframe) toggleWireframe();
-    ImGui::SameLine();
-    if (ImGui::Button("Celulas", buttonSize) && toggleCell) toggleCell();
-    ImGui::SameLine();
+void Interface::RenderToolsSection() {
+    const float spacing    = ImGui::GetStyle().ItemSpacing.x;
+    const float availWidth = ImGui::GetContentRegionAvail().x;
+    const ImVec2 buttonSize((availWidth - spacing * 3.0f) / 4.0f, 40.0f);
+
+    if (selectCollection == ObjectToolCollection::Octree) {
+        // primitivas
+        if (ImGui::Button("Esfera", buttonSize)) selectedTool = ToolType::Sphere;
+        ImGui::SameLine();
+        if (ImGui::Button("Cubo", buttonSize)) selectedTool = ToolType::Cube;
+        ImGui::SameLine();
+        if (ImGui::Button("Cone", buttonSize)) selectedTool = ToolType::Cone;
+        ImGui::SameLine();
+        if (ImGui::Button("Cilindro", buttonSize)) selectedTool = ToolType::Cylinder;
+
+        // operações
+        if (ImGui::Button("Uniao", buttonSize)) selectedTool = ToolType::Union;
+        ImGui::SameLine();
+        if (ImGui::Button("Intersec.", buttonSize)) selectedTool = ToolType::Intersection;
+        ImGui::SameLine();
+        if (ImGui::Button("Volume", buttonSize)) selectedTool = ToolType::Volume;
+        ImGui::SameLine();
+        if (ImGui::Button("Area", buttonSize)) selectedTool = ToolType::Area;
+
+        // ferramentas
+        if (ImGui::Button("Mover", buttonSize)) selectedTool = ToolType::Move;
+        ImGui::SameLine();
+        if (ImGui::Button("Escalar", buttonSize)) selectedTool = ToolType::Scale;
+        ImGui::SameLine();
+        if (ImGui::Button("Exportar", buttonSize)) selectedTool = ToolType::Export;
+        ImGui::SameLine();
+        if (ImGui::Button("Importar", buttonSize)) selectedTool = ToolType::Import;
+
+        // visualização
+        if (ImGui::Button("Wireframe", buttonSize) && toggleWireframe) toggleWireframe();
+        ImGui::SameLine();
+        if (ImGui::Button("Celulas", buttonSize) && toggleCell) toggleCell();
+    } else if (selectCollection == ObjectToolCollection::CSG) {
+        // primitivas
+        if (ImGui::Button("Esfera", buttonSize)) selectedTool = ToolType::Sphere;
+        ImGui::SameLine();
+        if (ImGui::Button("Cubo", buttonSize)) selectedTool = ToolType::Cube;
+        ImGui::SameLine();
+        if (ImGui::Button("Cone", buttonSize)) selectedTool = ToolType::Cone;
+        ImGui::SameLine();
+        if (ImGui::Button("Cilindro", buttonSize)) selectedTool = ToolType::Cylinder;
+
+        // operações
+        if (ImGui::Button("Uniao", buttonSize)) selectedTool = ToolType::Union;
+        ImGui::SameLine();
+        if (ImGui::Button("Intersec.", buttonSize)) selectedTool = ToolType::Intersection;
+        ImGui::SameLine();
+        if (ImGui::Button("Dif.", buttonSize)) selectedTool = ToolType::Difference;
+
+        if (ImGui::Button("Volume", buttonSize)) selectedTool = ToolType::Volume;
+        ImGui::SameLine();
+        if (ImGui::Button("Area", buttonSize)) selectedTool = ToolType::Area;
+
+        // ferramentas
+        if (ImGui::Button("Mover", buttonSize)) selectedTool = ToolType::Move;
+        ImGui::SameLine();
+        if (ImGui::Button("Escalar", buttonSize)) selectedTool = ToolType::Scale;
+        ImGui::SameLine();
+        if (ImGui::Button("Rotac.", buttonSize)) selectedTool = ToolType::Rotate;
+
+        if (ImGui::Button("Exportar", buttonSize)) selectedTool = ToolType::Export;
+        ImGui::SameLine();
+        if (ImGui::Button("Importar", buttonSize)) selectedTool = ToolType::Import;
+        ImGui::SameLine();
+        if (ImGui::Button("Render", buttonSize)) selectedTool = ToolType::Render;
+    } else if (selectCollection == ObjectToolCollection::BREP) {
+        ImGui::Text("Em breve");
+    }
+
     if (ImGui::Button("Camera", buttonSize)) selectedTool = ToolType::Camera;
     ImGui::SameLine();
-
-    ImGui::Text("");
-
     // extras
     if (ImGui::Button("Ocultar", buttonSize) && toggleVisibility) toggleVisibility();
     ImGui::SameLine();
@@ -147,9 +204,10 @@ void Interface::RenderDetailsSection(const std::vector<std::string>& objectNames
         case ToolType::Sphere:
             ImGui::InputText("Nome", &label);
             ImGui::InputFloat("Raio", &sphereRadius);
-            ImGui::InputInt("MaxLevel", &maxLevel);
-            if (ImGui::Button("Aplicar") && OnCreateSphere) {
-                OnCreateSphere(label, sphereRadius, maxLevel);
+            if (selectCollection == ObjectToolCollection::Octree) ImGui::InputInt("MaxLevel", &maxLevel);
+            if (ImGui::Button("Aplicar") && OnCreateSphere && OnCreateCSGSphere) {
+                if (selectCollection == ObjectToolCollection::Octree) OnCreateSphere(label, sphereRadius, maxLevel);
+                else if (selectCollection == ObjectToolCollection::CSG) OnCreateCSGSphere(label, sphereRadius);
                 ResetInputs();
             }
             break;
@@ -159,21 +217,24 @@ void Interface::RenderDetailsSection(const std::vector<std::string>& objectNames
             ImGui::InputFloat("Tamanho X", &cubeSizeX);
             ImGui::InputFloat("Tamanho Y", &cubeSizeY);
             ImGui::InputFloat("Tamanho Z", &cubeSizeZ);
-            ImGui::InputInt("MaxLevel", &maxLevel);
+            if (selectCollection == ObjectToolCollection::Octree) ImGui::InputInt("MaxLevel", &maxLevel);
 
-            ImGui::Separator();
-            ImGui::Text("Rotação da primitiva (em graus):");
-            ImGui::SetNextItemWidth(60.0f);
-            ImGui::InputFloat("X", &rotationX);
-            ImGui::SameLine();
-            ImGui::SetNextItemWidth(60.0f);
-            ImGui::InputFloat("Y", &rotationY);
-            ImGui::SameLine();
-            ImGui::SetNextItemWidth(60.0f);
-            ImGui::InputFloat("Z", &rotationZ);
+            if (selectCollection == ObjectToolCollection::Octree) {
+                ImGui::Separator();
+                ImGui::Text("Rotação da primitiva (em graus):");
+                ImGui::SetNextItemWidth(60.0f);
+                ImGui::InputFloat("X", &rotationX);
+                ImGui::SameLine();
+                ImGui::SetNextItemWidth(60.0f);
+                ImGui::InputFloat("Y", &rotationY);
+                ImGui::SameLine();
+                ImGui::SetNextItemWidth(60.0f);
+                ImGui::InputFloat("Z", &rotationZ);
+            }
 
-            if (ImGui::Button("Aplicar") && OnCreateCube) {
-                OnCreateCube(label, cubeSizeX, cubeSizeY, cubeSizeZ, maxLevel, rotationX, rotationY, rotationZ);
+            if (ImGui::Button("Aplicar") && OnCreateCube && OnCreateCSGCube) {
+                if (selectCollection == ObjectToolCollection::Octree) OnCreateCube(label, cubeSizeX, cubeSizeY, cubeSizeZ, maxLevel, rotationX, rotationY, rotationZ);
+                else if (selectCollection == ObjectToolCollection::CSG) OnCreateCSGCube(label, cubeSizeX, cubeSizeY, cubeSizeZ);
                 ResetInputs();
             }
             break;
@@ -182,21 +243,24 @@ void Interface::RenderDetailsSection(const std::vector<std::string>& objectNames
             ImGui::InputText("Nome", &label);
             ImGui::InputFloat("Raio", &cylinderRadius);
             ImGui::InputFloat("Altura", &cylinderHeight);
-            ImGui::InputInt("MaxLevel", &maxLevel);
+            if (selectCollection == ObjectToolCollection::Octree) ImGui::InputInt("MaxLevel", &maxLevel);
 
-            ImGui::Separator();
-            ImGui::Text("Rotação da primitiva (em graus):");
-            ImGui::SetNextItemWidth(60.0f);
-            ImGui::InputFloat("X", &rotationX);
-            ImGui::SameLine();
-            ImGui::SetNextItemWidth(60.0f);
-            ImGui::InputFloat("Y", &rotationY);
-            ImGui::SameLine();
-            ImGui::SetNextItemWidth(60.0f);
-            ImGui::InputFloat("Z", &rotationZ);
+            if (selectCollection == ObjectToolCollection::Octree) {
+                ImGui::Separator();
+                ImGui::Text("Rotação da primitiva (em graus):");
+                ImGui::SetNextItemWidth(60.0f);
+                ImGui::InputFloat("X", &rotationX);
+                ImGui::SameLine();
+                ImGui::SetNextItemWidth(60.0f);
+                ImGui::InputFloat("Y", &rotationY);
+                ImGui::SameLine();
+                ImGui::SetNextItemWidth(60.0f);
+                ImGui::InputFloat("Z", &rotationZ);
+            }
 
-            if (ImGui::Button("Aplicar") && OnCreateCylinder) {
-                OnCreateCylinder(label, cylinderRadius, cylinderHeight, maxLevel, rotationX, rotationY, rotationZ);
+            if (ImGui::Button("Aplicar") && OnCreateCylinder && OnCreateCSGCylinder) {
+                if (selectCollection == ObjectToolCollection::Octree) OnCreateCylinder(label, cylinderRadius, cylinderHeight, maxLevel, rotationX, rotationY, rotationZ);
+                else if (selectCollection == ObjectToolCollection::CSG) OnCreateCSGCylinder(label, cylinderRadius, cylinderHeight);
                 ResetInputs();
             }
             break;
@@ -205,27 +269,32 @@ void Interface::RenderDetailsSection(const std::vector<std::string>& objectNames
             ImGui::InputText("Nome", &label);
             ImGui::InputFloat("Raio", &coneRadius);
             ImGui::InputFloat("Altura", &coneHeight);
-            ImGui::InputInt("MaxLevel", &maxLevel);
+            if (selectCollection == ObjectToolCollection::Octree) ImGui::InputInt("MaxLevel", &maxLevel);
 
-            ImGui::Separator();
-            ImGui::Text("Rotação da primitiva (em graus):");
-            ImGui::SetNextItemWidth(60.0f);
-            ImGui::InputFloat("X", &rotationX);
-            ImGui::SameLine();
-            ImGui::SetNextItemWidth(60.0f);
-            ImGui::InputFloat("Y", &rotationY);
-            ImGui::SameLine();
-            ImGui::SetNextItemWidth(60.0f);
-            ImGui::InputFloat("Z", &rotationZ);
+            if (selectCollection == ObjectToolCollection::Octree) {
+                ImGui::Separator();
+                ImGui::Text("Rotação da primitiva (em graus):");
+                ImGui::SetNextItemWidth(60.0f);
+                ImGui::InputFloat("X", &rotationX);
+                ImGui::SameLine();
+                ImGui::SetNextItemWidth(60.0f);
+                ImGui::InputFloat("Y", &rotationY);
+                ImGui::SameLine();
+                ImGui::SetNextItemWidth(60.0f);
+                ImGui::InputFloat("Z", &rotationZ);
+            }
 
-            if (ImGui::Button("Aplicar") && OnCreateCone) {
-                OnCreateCone(label, coneRadius, coneHeight, maxLevel, rotationX, rotationY, rotationZ);
+            if (ImGui::Button("Aplicar") && OnCreateCone && OnCreateCSGCone) {
+                if (selectCollection == ObjectToolCollection::Octree) OnCreateCone(label, coneRadius, coneHeight, maxLevel, rotationX, rotationY, rotationZ);
+                else if (selectCollection == ObjectToolCollection::CSG) OnCreateCSGCone(label, coneRadius, coneHeight);
+
                 ResetInputs();
             }
             break;
 
         case ToolType::Union:
-        case ToolType::Intersection: {
+        case ToolType::Intersection:
+        case ToolType::Difference: {
             if (selectedObjectIndex < 0) {
                 ImGui::Text("Selecione o objeto A na lista acima.");
                 break;
@@ -253,14 +322,23 @@ void Interface::RenderDetailsSection(const std::vector<std::string>& objectNames
 
             ImGui::BeginDisabled(!validSelection);
             ImGui::InputText("Nome", &label);
-            ImGui::Checkbox("Nivel dinamico", &useDynamicLevel);
-            ImGui::InputInt("MaxLevel", &maxLevel);
+
+            if (selectCollection == ObjectToolCollection::Octree) {
+                ImGui::Checkbox("Nivel dinamico", &useDynamicLevel);
+                ImGui::InputInt("MaxLevel", &maxLevel);
+            }
+
             if (ImGui::Button("Aplicar")) {
-                if (selectedTool == ToolType::Union && OnUnion) {
-                    OnUnion(label, maxLevel, useDynamicLevel);
+                if (selectedTool == ToolType::Union && OnUnion && OnCSGUnion) {
+                    if (selectCollection == ObjectToolCollection::Octree) OnUnion(label, maxLevel, useDynamicLevel);
+                    else if (selectCollection == ObjectToolCollection::CSG) OnCSGUnion(label);
                     ResetInputs();
-                } else if (selectedTool == ToolType::Intersection && OnIntersection) {
-                    OnIntersection(label, maxLevel, useDynamicLevel);
+                } else if (selectedTool == ToolType::Intersection && OnIntersection && OnCSGIntersection) {
+                    if (selectCollection == ObjectToolCollection::Octree) OnIntersection(label, maxLevel, useDynamicLevel);
+                    else if (selectCollection == ObjectToolCollection::CSG) OnCSGIntersection(label);
+                    ResetInputs();
+                } else if (selectedTool == ToolType::Difference && OnCSGDifference) {
+                    if (selectCollection == ObjectToolCollection::CSG) OnCSGDifference(label);
                     ResetInputs();
                 }
             }
@@ -304,38 +382,45 @@ void Interface::RenderDetailsSection(const std::vector<std::string>& objectNames
             } else {
                 ImGui::Text("Objeto selecionado: %d", selectedObjectIndex);
 
-                const float spacing = ImGui::GetStyle().ItemSpacing.x;
-                const ImVec2 axisButtonSize((ImGui::GetContentRegionAvail().x - spacing * 2.0f) / 3.0f, 0.0f);
+                if (selectCollection == ObjectToolCollection::Octree) {
+                    const float spacing = ImGui::GetStyle().ItemSpacing.x;
+                    const ImVec2 axisButtonSize((ImGui::GetContentRegionAvail().x - spacing * 2.0f) / 3.0f, 0.0f);
 
-                auto axisButton = [&](const char* label, Axys axis) {
-                    bool isSelected = (selectedAxys == axis);
-                    if (isSelected) {
-                        ImGui::PushStyleColor(ImGuiCol_Button, ImGui::GetStyle().Colors[ImGuiCol_ButtonActive]);
-                    }
-                    if (ImGui::Button(label, axisButtonSize)) {
-                        selectedAxys = axis;
-                    }
-                    if (isSelected) {
-                        ImGui::PopStyleColor();
-                    }
-                };
+                    auto axisButton = [&](const char* label, Axys axis) {
+                        bool isSelected = (selectedAxys == axis);
+                        if (isSelected) {
+                            ImGui::PushStyleColor(ImGuiCol_Button, ImGui::GetStyle().Colors[ImGuiCol_ButtonActive]);
+                        }
+                        if (ImGui::Button(label, axisButtonSize)) {
+                            selectedAxys = axis;
+                        }
+                        if (isSelected) {
+                            ImGui::PopStyleColor();
+                        }
+                    };
 
-                axisButton("X", Axys::X);
-                ImGui::SameLine();
-                axisButton("Y", Axys::Y);
-                ImGui::SameLine();
-                axisButton("Z", Axys::Z);
+                    axisButton("X", Axys::X);
+                    ImGui::SameLine();
+                    axisButton("Y", Axys::Y);
+                    ImGui::SameLine();
+                    axisButton("Z", Axys::Z);
 
-                // ImGui::SliderFloat("Valor", &translation, -10.0f, 10.0f);
-                ImGui::SliderFloat("##slider", &translation, -10.0f, 10.0f);
-                ImGui::SameLine();
-                ImGui::InputFloat("Valor", &translation);
+                    // ImGui::SliderFloat("Valor", &translation, -10.0f, 10.0f);
+                    ImGui::SliderFloat("##slider", &translation, -10.0f, 10.0f);
+                    ImGui::SameLine();
+                    ImGui::InputFloat("Valor", &translation);
 
-                ImGui::Checkbox("Usar transformação global", &useGlobalTransform);
-                // ImGui::Text("");
+                    ImGui::Checkbox("Usar transformação global", &useGlobalTransform);
+                    // ImGui::Text("");
+                } else if (selectCollection == ObjectToolCollection::CSG) {
+                    ImGui::InputFloat("X", &csgTransformValues.x);
+                    ImGui::InputFloat("Y", &csgTransformValues.y);
+                    ImGui::InputFloat("Z", &csgTransformValues.z);
+                }
 
-                if (ImGui::Button("Aplicar") && OnMoveObject) {
-                    OnMoveObject(selectedAxys, translation, useGlobalTransform);
+                if (ImGui::Button("Aplicar") && OnMoveObject && OnMoveCSGObject) {
+                    if (selectCollection == ObjectToolCollection::Octree) OnMoveObject(selectedAxys, translation, useGlobalTransform);
+                    else if (selectCollection == ObjectToolCollection::CSG) OnMoveCSGObject(csgTransformValues);
                     ResetInputs();
                 }
             }
@@ -347,15 +432,41 @@ void Interface::RenderDetailsSection(const std::vector<std::string>& objectNames
             } else {
                 ImGui::Text("Objeto selecionado: %d", selectedObjectIndex);
 
-                ImGui::SliderFloat("##slider", &scale, 0.1f, 10.0f);
-                ImGui::SameLine();
-                ImGui::InputFloat("Valor", &scale);
+                if (selectCollection == ObjectToolCollection::Octree) {
+                    ImGui::SliderFloat("##slider", &scale, 0.1f, 10.0f);
+                    ImGui::SameLine();
+                    ImGui::InputFloat("Valor", &scale);
 
-                ImGui::Checkbox("Usar transformação global", &useGlobalTransform);
+                    ImGui::Checkbox("Usar transformação global", &useGlobalTransform);
+                } else if (selectCollection == ObjectToolCollection::CSG) {
+                    ImGui::InputFloat("X", &csgTransformValues.x);
+                    ImGui::InputFloat("Y", &csgTransformValues.y);
+                    ImGui::InputFloat("Z", &csgTransformValues.z);
+                }
 
-                if (ImGui::Button("Aplicar") && OnScaleObject) {
-                    OnScaleObject(scale, useGlobalTransform);
+                if (ImGui::Button("Aplicar") && OnScaleObject && OnScaleCSGObject) {
+                    if (selectCollection == ObjectToolCollection::Octree) OnScaleObject(scale, useGlobalTransform);
+                    else if (selectCollection == ObjectToolCollection::CSG) OnScaleCSGObject(csgTransformValues);
                     ResetInputs();
+                }
+            }
+            break;
+
+        case ToolType::Rotate:
+            if (selectedObjectIndex < 0) {
+                ImGui::Text("Selecione um objeto na lista acima.");
+            } else {
+                ImGui::Text("Objeto selecionado: %d", selectedObjectIndex);
+
+                if (selectCollection == ObjectToolCollection::CSG) {
+                    ImGui::InputFloat("X", &csgTransformValues.x);
+                    ImGui::InputFloat("Y", &csgTransformValues.y);
+                    ImGui::InputFloat("Z", &csgTransformValues.z);
+
+                    if (ImGui::Button("Aplicar") && OnScaleObject && OnScaleCSGObject) {
+                        OnRotateCSGObject(csgTransformValues);
+                        ResetInputs();
+                    }
                 }
             }
             break;
@@ -374,6 +485,46 @@ void Interface::RenderDetailsSection(const std::vector<std::string>& objectNames
             if (ImGui::Button("Zoom", {96.0f, 0.0f}) && ResetZoom) ResetZoom();
             break;
 
+        case ToolType::Render:
+            if (selectedObjectIndex < 0) {
+                ImGui::Text("Selecione um objeto na lista acima.");
+            } else {
+                ImGui::Text("Objeto selecionado: %d", selectedObjectIndex);
+                ImGui::InputText("Nome", &exportFileName);
+
+                bool validName = !exportFileName.empty();
+                if (!validName) ImGui::TextDisabled("Digite um nome de arquivo.");
+
+                ImGui::BeginDisabled(!validName);
+
+                ImGui::InputInt("Res X", &renderResolutionX);
+                ImGui::InputInt("Res Y", &renderResolutionY);
+
+                ImGui::Text("Presets");
+                if (ImGui::Button("Baixa", {96.0f, 0.0f})) {
+                    renderResolutionX = 800;
+                    renderResolutionY = 600;
+                }
+                ImGui::SameLine();
+                if (ImGui::Button("Média", {96.0f, 0.0f})) {
+                    renderResolutionX = 1280;
+                    renderResolutionY = 960;
+                }
+                ImGui::SameLine();
+                if (ImGui::Button("Alta", {96.0f, 0.0f})) {
+                    renderResolutionX = 1440;
+                    renderResolutionY = 1080;
+                }
+
+                if (ImGui::Button("Aplicar") && OnRenderObject) {
+                    OnRenderObject(exportFileName, renderResolutionX, renderResolutionY);
+                    ResetInputs();
+                }
+                ImGui::EndDisabled();
+            }
+            break;
+
+
         case ToolType::Export:
             if (selectedObjectIndex < 0) {
                 ImGui::Text("Selecione um objeto na lista acima.");
@@ -382,9 +533,7 @@ void Interface::RenderDetailsSection(const std::vector<std::string>& objectNames
                 ImGui::InputText("Nome", &exportFileName);
 
                 bool validName = !exportFileName.empty();
-                if (!validName) {
-                    ImGui::TextDisabled("Digite um nome de arquivo.");
-                }
+                if (!validName) ImGui::TextDisabled("Digite um nome de arquivo.");
 
                 ImGui::BeginDisabled(!validName);
                 if (ImGui::Button("Aplicar") && OnExportObject) {

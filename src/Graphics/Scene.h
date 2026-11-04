@@ -21,19 +21,31 @@ public:
     void toggleCell();
     bool getShowCell() const;
 
-    void setSelectedOctree(int);
-    void setSecondSelectedOctree(int);
+    void setSelectedObject(int);
+    void setSecondSelectedObject(int);
     void setSceneState(SceneState);
+
+    ObjectType getSelectedObjectType() const;
+    ObjectType getSecondSelectedObjectType() const;
 
     Octree& getSelectedOctree();
     Octree& getSecondSelectedOctree();
     void addOctree(Octree&&);
-    std::size_t getOctreesSize() const;
 
-    void removeSelectedOctrees();
-    void removeSelectedOctree();
+    CSG& getSelectedCSG();
+    CSG& getSecondSelectedCSG();
+    void addCSG(CSG&&);
+
+    void updateOctreeFromSelectedCSG();
+
+    std::size_t getObjectsSize() const;
+
+    void removeSelectedObjects();
+    void removeSelectedObject();
+    void removeSecondSelectedObject();
     void resetSelectedIndex();
     void resetSecondSelectedIndex();
+
 
     void toggleSelectedVisibility();
 
@@ -48,6 +60,6 @@ private:
     
     bool showWireframe = false;
     bool showCell = true;
-    int selectedOctree = -1;
-    int secondSelectedOctree = -1;
+    int selectedObject = -1;
+    int secondSelectedObject = -1;
 };
