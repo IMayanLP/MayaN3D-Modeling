@@ -141,12 +141,13 @@ std::vector<std::string> Scene::getObjectNames() const {
     std::vector<std::string> objectNames;
 
     for (const Object& o : objects) {
-        std::string objType = o.type == ObjectType::Octree ? "[Octree]" : "[CSG]";
+        std::string objType = o.type == ObjectType::Octree ? "[Octree] " : "[CSG] ";
+        std::string objVisibility = !o.visible ? " <Oculto>" : "";
         std::string label;
         if (o.type == ObjectType::Octree) label = o.octree.getLabel();
         else if (o.type == ObjectType::CSG) label = o.csg.getLabel();
         if (label.empty()) label = "unnamed";
-        objectNames.push_back(objType + " " + label);
+        objectNames.push_back(objType + label + objVisibility);
     }
 
     return objectNames;

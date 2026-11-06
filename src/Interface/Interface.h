@@ -59,10 +59,10 @@ class Interface {
         std::function<void(std::string, int, bool)> OnIntersection;
 
         // CSG
-        std::function<void(std::string, float)> OnCreateCSGSphere;
-        std::function<void(std::string, float, float, float)> OnCreateCSGCube;
-        std::function<void(std::string, float, float)> OnCreateCSGCylinder;
-        std::function<void(std::string, float, float)> OnCreateCSGCone;
+        std::function<void(std::string)> OnCreateCSGSphere;
+        std::function<void(std::string)> OnCreateCSGCube;
+        std::function<void(std::string)> OnCreateCSGCylinder;
+        std::function<void(std::string)> OnCreateCSGCone;
 
         std::function<void(std::string)> OnCSGUnion;
         std::function<void(std::string)> OnCSGIntersection;
@@ -89,14 +89,19 @@ class Interface {
         std::function<float()> OnCalculateArea;
 
         std::function<void(std::string fileName)> OnExportObject;
+        std::function<void(std::string fileName)> OnExportLegacyObject;
         std::function<void(std::string fileName)> OnImportObject;
-        std::function<void(std::string fileName, int, int)> OnRenderObject;
+        std::function<void(std::string fileName)> OnImportCSGObject;
+        std::function<void(std::string fileName)> OnImportLegacyCSGObject;
+        std::function<void(std::string fileName, int, int, bool, Ray)> OnRenderObject;
 
         void ResetSelection();
         void ResetInputs();
+        void ResetTransformValues();
 
     private:
         void RenderCollectionToolsSection();
+
         void RenderToolsSection();
         void RenderObjectListSection(const std::vector<std::string>&);
         void RenderDetailsSection(const std::vector<std::string>&);
@@ -172,4 +177,7 @@ class Interface {
         std::string defaultSelectedImportFile = "";
         int renderResolutionX = 800;
         int renderResolutionY = 600;
+        glm::vec3 debugRayOrigin = {0.0f, 0.0f, 0.0f};
+        glm::vec3 debugRayDirection = {0.0f, 0.0f, 0.0f};
+        bool useDebugRay = false;
 };

@@ -19,9 +19,6 @@ public:
 
     void DrawMesh(const std::vector<Triangle>&, Shader&, float, const glm::vec3&);
 
-    void InitializeRayCastTexture();
-    void DrawRayCastImage(const CSG& csg, const Camera& camera, int viewportWidth, int viewportHeight);
-
 private:
     GLuint VAO{};
     GLuint VBO{};

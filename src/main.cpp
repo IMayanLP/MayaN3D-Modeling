@@ -110,9 +110,9 @@ int main() {
         scene.addOctree(std::move(newOctree));
     };
 
-    UI.OnCreateCSGSphere = [&scene](std::string label, float radius) {
+    UI.OnCreateCSGSphere = [&scene](std::string label) {
         CSG newCSG;
-        Sphere sphere(radius);
+        Sphere sphere(0.5f);
         if (label.empty()) label = "(Esfera) Object " + std::to_string(scene.getObjectsSize());
         std::unique_ptr<CSGNode> sphereNode = CSG::CreatePrimitiveNode(sphere);
         newCSG.SetRoot(std::move(sphereNode));
@@ -120,7 +120,6 @@ int main() {
 
         scene.addCSG(std::move(newCSG));
     };
-
 
     UI.OnCreateCube = [&scene](std::string label, float sizeX, float sizeY, float sizeZ, int maxLevel, float rotationX, float rotationY, float rotationZ) {
         Octree newOctree;
@@ -134,9 +133,9 @@ int main() {
         scene.addOctree(std::move(newOctree));
     };
 
-    UI.OnCreateCSGCube = [&scene](std::string label, float sizeX, float sizeY, float sizeZ) {
+    UI.OnCreateCSGCube = [&scene](std::string label) {
         CSG newCSG;
-        Cube cube(sizeX, sizeY, sizeZ);
+        Cube cube(1.0f, 1.0f, 1.0f);
         if (label.empty()) label = "(Bloco) Object " + std::to_string(scene.getObjectsSize());
         std::unique_ptr<CSGNode> cubeNode = CSG::CreatePrimitiveNode(cube);
         newCSG.SetRoot(std::move(cubeNode));
@@ -157,9 +156,9 @@ int main() {
         scene.addOctree(std::move(newOctree));
     };
 
-    UI.OnCreateCSGCylinder = [&scene](std::string label, float radius, float height) {
+    UI.OnCreateCSGCylinder = [&scene](std::string label) {
         CSG newCSG;
-        Cylinder cylinder(radius, height);
+        Cylinder cylinder(0.5f, 1.0f);
         if (label.empty()) label = "(Cilindro) Object " + std::to_string(scene.getObjectsSize());
         std::unique_ptr<CSGNode> cylinderNode = CSG::CreatePrimitiveNode(cylinder);
         newCSG.SetRoot(std::move(cylinderNode));
@@ -180,9 +179,9 @@ int main() {
         scene.addOctree(std::move(newOctree));
     };
 
-    UI.OnCreateCSGCone = [&scene](std::string label, float radius, float height) {
+    UI.OnCreateCSGCone = [&scene](std::string label) {
         CSG newCSG;
-        Cone cone(radius, height);
+        Cone cone(0.5f, 1.0f);
         if (label.empty()) label = "(Cone) Object " + std::to_string(scene.getObjectsSize());
         std::unique_ptr<CSGNode> coneNode = CSG::CreatePrimitiveNode(cone);
         newCSG.SetRoot(std::move(coneNode));
@@ -368,10 +367,22 @@ int main() {
     };
 
     UI.OnExportObject = [&scene](std::string fileName) {
-        fs::create_directories("files/output");
+        if (scene.getSelectedObjectType() == ObjectType::Octree) {
+            fs::create_directories("files/output");
 
-        std::ofstream file("files/output/" + fileName + ".txt");
-        file << scene.getSelectedOctree().ToString();
+            std::ofstream file("files/output/" + fileName + ".txt");
+            file << scene.getSelectedOctree().ToString();
+        } else if (scene.getSelectedObjectType() == ObjectType::CSG) {
+            if (scene.getSelectedCSG().Export(fileName)) std::cout << "Exportado com sucesso" << '\n';
+            else std::cout << "A CSG não é compatível com esse tipo de exportação" << '\n';
+        }
+    };
+
+    UI.OnExportLegacyObject = [&scene](std::string fileName) {
+         if (scene.getSelectedObjectType() == ObjectType::CSG) {
+            if (scene.getSelectedCSG().ExportLegacy(fileName)) std::cout << "Exportado com sucesso" << '\n';
+            else std::cout << "A CSG não é compatível com esse tipo de exportação" << '\n';
+        }
     };
 
     UI.OnImportObject = [&scene](std::string fileName) {
@@ -390,10 +401,20 @@ int main() {
         scene.addOctree(std::move(newOctree));
     };
 
-    UI.OnRenderObject = [&scene, &camera](std::string fileName, int resolutionX, int resolutionY) {
+    UI.OnImportCSGObject = [&scene](std::string fileName) {
+        CSG newCSG = CSG::Import(fileName);
+        scene.addCSG(std::move(newCSG));
+    };
+
+    UI.OnImportLegacyCSGObject = [&scene](std::string fileName) {
+        CSG newCSG = CSG::ImportLegacy(fileName);
+        scene.addCSG(std::move(newCSG));
+    };
+
+    UI.OnRenderObject = [&scene, &camera](std::string fileName, int resolutionX, int resolutionY, bool useDebugRay, Ray ray) {
         RayCast rayCast;
 
-        std::vector<unsigned char> pixels = rayCast.Render(scene.getSelectedCSG(), camera, resolutionX, resolutionY, glm::vec3(1.0f, 0.0f, 0.0f));
+        std::vector<unsigned char> pixels = rayCast.Render(scene.getSelectedCSG(), camera, resolutionX, resolutionY, {0.0, 0.8, 1.0}, useDebugRay, ray);
         std::cout << "Pixels gerados: " << pixels.size() << '\n';
 
         std::string filename = "files/images/" + fileName + ".png";
@@ -409,7 +430,7 @@ int main() {
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
 
-        float currentFrame = static_cast<float>(glfwGetTime());
+        float currentFrame = glfwGetTime();
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
 

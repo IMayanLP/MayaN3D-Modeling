@@ -15,6 +15,8 @@ public:
     glm::vec3 GetOrigin() const;
     glm::vec3 GetDirection() const;
 
+    static bool RaysIntersect(const Ray& ray1, const Ray& ray2, float epsilon, float& ray2T);
+
 private:
     glm::vec3 origin;
     glm::vec3 direction;

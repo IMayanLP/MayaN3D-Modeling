@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <iostream>
 
 #include <glm/gtc/matrix_inverse.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -9,7 +10,7 @@
 #include "Ray.h"
 #include "SMC.h"
 
-std::vector<unsigned char> RayCast::Render(const CSG& csg, const Camera& camera, int width, int height, glm::vec3 baseColor) const {
+std::vector<unsigned char> RayCast::Render(const CSG& csg, const Camera& camera, int width, int height, glm::vec3 baseColor, bool useDebugRay, const Ray& debugRay) const {
     if (width <= 0 || height <= 0) return {};
 
     std::vector<unsigned char> pixels(width * height * 3);
@@ -32,6 +33,28 @@ std::vector<unsigned char> RayCast::Render(const CSG& csg, const Camera& camera,
 
     glm::vec3 lightDirection = glm::normalize(glm::vec3(-1.0f, 2.0f, 1.0f));
 
+    // raio de debug
+    std::vector<SMCInterval> intervalosDebug;
+    if (useDebugRay) {
+        intervalosDebug = SMC::Classify(csg, debugRay);
+
+        if (!intervalosDebug.empty()) {
+            if (intervalosDebug.size() == 1) {
+                intervalosDebug.back().end.intersection.t = intervalosDebug.back().start.intersection.t + 10.0f;
+            } else if (!std::isfinite(intervalosDebug.back().end.intersection.t)) {
+                intervalosDebug.back().end.intersection.t = intervalosDebug.back().start.intersection.t + 1.0f;
+            }
+        }
+
+        std::cout << "Debug Intervals (" << intervalosDebug.size() << "):" << std::endl;
+
+        for (const SMCInterval& interval : intervalosDebug) {
+            std::string intervalClass = interval.classification == SMCClassification::IN ? "IN" : "OUT";
+            std::cout << "Start: " << interval.start.intersection.t << " | End: " << interval.end.intersection.t << " | Classification: " << intervalClass << std::endl;
+        }
+
+    }
+
     for (int y = 0; y < height; ++y) {
         for (int x = 0; x < width; ++x) {
             float posX = (2.0f * (x + 0.5f) / width) - 1.0f;
@@ -41,6 +64,10 @@ std::vector<unsigned char> RayCast::Render(const CSG& csg, const Camera& camera,
 
             Ray ray(cameraPosition, direction);
             std::vector<SMCInterval> intervals = SMC::Classify(csg, ray);
+
+            float tDebugRay;
+            bool rayInsertectDebugRay;
+            if (useDebugRay) rayInsertectDebugRay = Ray::RaysIntersect(ray, debugRay, 0.01f, tDebugRay);
 
             const RayIntersection* hit = nullptr;
             float nearestT = std::numeric_limits<float>::infinity();
@@ -56,7 +83,29 @@ std::vector<unsigned char> RayCast::Render(const CSG& csg, const Camera& camera,
                 hit = &interval.start.intersection;
             }
 
-            if (hit == nullptr) continue;
+            if (hit == nullptr) {
+                if (useDebugRay) {
+                    std::size_t pixelIndex = (y * width + x) * 3;
+                    if (rayInsertectDebugRay) {
+                        for (const SMCInterval& interval : intervalosDebug) {
+                            float fim = std::isfinite(interval.end.intersection.t) ? interval.end.intersection.t : interval.start.intersection.t + 1.0f;
+                            if (tDebugRay >= interval.start.intersection.t && tDebugRay <= fim) {
+                                if (interval.classification == SMCClassification::ON || interval.classification == SMCClassification::IN) {
+                                    pixels[pixelIndex] = 0;
+                                    pixels[pixelIndex + 1] = 255;
+                                    pixels[pixelIndex + 2] = 0;
+                                } else {
+                                    pixels[pixelIndex] = 255;
+                                    pixels[pixelIndex + 1] = 0;
+                                    pixels[pixelIndex + 2] = 0;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                continue;
+            }
 
             glm::vec3 normal = glm::normalize(hit->normal);
 
@@ -68,6 +117,25 @@ std::vector<unsigned char> RayCast::Render(const CSG& csg, const Camera& camera,
             pixels[pixelIndex] = 255.0f * baseColor.r * intensity;
             pixels[pixelIndex + 1] = 255.0f * baseColor.g * intensity;
             pixels[pixelIndex + 2] = 255.0f * baseColor.b * intensity;
+
+            if (useDebugRay) {
+                if (rayInsertectDebugRay) {
+                    for (const SMCInterval& interval : intervalosDebug) {
+                        float fim = std::isfinite(interval.end.intersection.t) ? interval.end.intersection.t : interval.start.intersection.t + 1.0f;
+                        if (tDebugRay >= interval.start.intersection.t && tDebugRay <= fim) {
+                            if (interval.classification == SMCClassification::ON || interval.classification == SMCClassification::IN) {
+                                pixels[pixelIndex] = 0;
+                                pixels[pixelIndex + 1] = 255;
+                                pixels[pixelIndex + 2] = 0;
+                            } else {
+                                pixels[pixelIndex] = 255;
+                                pixels[pixelIndex + 1] = 0;
+                                pixels[pixelIndex + 2] = 0;
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 

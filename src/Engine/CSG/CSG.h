@@ -4,6 +4,10 @@
 #include <memory>
 
 #include "../Primitives/Primitive.h"
+#include "../Primitives/Sphere.h"
+#include "../Primitives/Cube.h"
+#include "../Primitives/Cone.h"
+#include "../Primitives/Cylinder.h"
 #include "../Primitives/Triangle.h"
 #include "../Octree/Octree.h"
 
@@ -39,9 +43,14 @@ class CSGNode {
         std::unique_ptr<Primitive> primitive;
         glm::vec3 transformValue = glm::vec3(0.0f);
 
-        SMCClassification CheckIsInside(const glm::vec3&) const;
-        SMCClassification CheckIsCellInside(const Cell&) const;
+        SMCClassification CheckIsInside(glm::vec3&);
+        SMCClassification CheckIsCellInside(Cell&);
         Cell GetBoundingBox();
+};
+
+struct ImportedNode {
+    std::string label;
+    std::unique_ptr<CSGNode> node;
 };
 
 class CSG {
@@ -50,15 +59,23 @@ class CSG {
         void SetRoot(std::unique_ptr<CSGNode>);
         std::unique_ptr<CSGNode> GetAndFreeRoot();
         const CSGNode* GetRoot() const;
-        SMCClassification CheckIsInside(const glm::vec3&) const;
-        SMCClassification CheckIsCellInside(const Cell&) const;
-        Cell GetBoundingBox();
 
+        // Conversao Octree
+        SMCClassification CheckIsInside(glm::vec3&);
+        SMCClassification CheckIsCellInside(Cell&);
+        Cell GetBoundingBox();
         Octree GenerateOctree();
 
-        static std::unique_ptr<CSGNode> CreatePrimitiveNode(const Primitive&);
+        // Operadores de nós
+        static std::unique_ptr<CSGNode> CreatePrimitiveNode(Primitive&);
         static std::unique_ptr<CSGNode> CreateBooleanNode(BooleanOperation, std::unique_ptr<CSGNode>, std::unique_ptr<CSGNode>);
         static std::unique_ptr<CSGNode> CreateTransformNode(TransformType, glm::vec3, std::unique_ptr<CSGNode>);
+
+        // I/O
+        bool Export(std::string&);
+        bool ExportLegacy(std::string&);
+        static CSG Import(const std::string&);
+        static CSG ImportLegacy(const std::string&);
 
         void setLabel(std::string);
         std::string getLabel() const;
@@ -66,6 +83,9 @@ class CSG {
     private:
         void Aux(Node*, int);
 
+        static std::string ExportNode(CSGNode*, std::vector<CSGNode*>, std::ofstream&, int&);
+        std::string ExportLegacyNode(CSGNode*,std::ofstream&, int&);
+
         std::unique_ptr<CSGNode> root;
-        std::string label = "";
+        std::string label;
 };

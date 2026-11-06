@@ -48,6 +48,17 @@ void Interface::ResetInputs() {
 
     renderResolutionX = 800;
     renderResolutionY = 600;
+
+    debugRayOrigin = {0.0f, 0.0f, 0.0f};
+    debugRayDirection = {0.0f, 0.0f, 0.0f};
+    useDebugRay = false;
+
+    ResetTransformValues();
+}
+
+void Interface::ResetTransformValues() {
+    if (selectedTool == ToolType::Scale) csgTransformValues = {1.0f, 1.0f, 1.0f};
+    else csgTransformValues = {0.0f, 0.0f, 0.0f};
 }
 
 void Interface::Render(float navBarSize, const std::vector<std::string>& objectNames) {
@@ -157,11 +168,11 @@ void Interface::RenderToolsSection() {
         if (ImGui::Button("Area", buttonSize)) selectedTool = ToolType::Area;
 
         // ferramentas
-        if (ImGui::Button("Mover", buttonSize)) selectedTool = ToolType::Move;
+        if (ImGui::Button("Mover", buttonSize)) {selectedTool = ToolType::Move; ResetTransformValues();}
         ImGui::SameLine();
-        if (ImGui::Button("Escalar", buttonSize)) selectedTool = ToolType::Scale;
+        if (ImGui::Button("Escalar", buttonSize)) {selectedTool = ToolType::Scale; ResetTransformValues();}
         ImGui::SameLine();
-        if (ImGui::Button("Rotac.", buttonSize)) selectedTool = ToolType::Rotate;
+        if (ImGui::Button("Rotac.", buttonSize)) {selectedTool = ToolType::Rotate; ResetTransformValues();}
 
         if (ImGui::Button("Exportar", buttonSize)) selectedTool = ToolType::Export;
         ImGui::SameLine();
@@ -203,23 +214,25 @@ void Interface::RenderDetailsSection(const std::vector<std::string>& objectNames
     switch (selectedTool) {
         case ToolType::Sphere:
             ImGui::InputText("Nome", &label);
-            ImGui::InputFloat("Raio", &sphereRadius);
-            if (selectCollection == ObjectToolCollection::Octree) ImGui::InputInt("MaxLevel", &maxLevel);
+            if (selectCollection == ObjectToolCollection::Octree) {
+                ImGui::InputFloat("Raio", &sphereRadius);
+                ImGui::InputInt("MaxLevel", &maxLevel);
+            }
             if (ImGui::Button("Aplicar") && OnCreateSphere && OnCreateCSGSphere) {
                 if (selectCollection == ObjectToolCollection::Octree) OnCreateSphere(label, sphereRadius, maxLevel);
-                else if (selectCollection == ObjectToolCollection::CSG) OnCreateCSGSphere(label, sphereRadius);
+                else if (selectCollection == ObjectToolCollection::CSG) OnCreateCSGSphere(label);
                 ResetInputs();
             }
             break;
 
         case ToolType::Cube:
             ImGui::InputText("Nome", &label);
-            ImGui::InputFloat("Tamanho X", &cubeSizeX);
-            ImGui::InputFloat("Tamanho Y", &cubeSizeY);
-            ImGui::InputFloat("Tamanho Z", &cubeSizeZ);
-            if (selectCollection == ObjectToolCollection::Octree) ImGui::InputInt("MaxLevel", &maxLevel);
-
             if (selectCollection == ObjectToolCollection::Octree) {
+                ImGui::InputFloat("Tamanho X", &cubeSizeX);
+                ImGui::InputFloat("Tamanho Y", &cubeSizeY);
+                ImGui::InputFloat("Tamanho Z", &cubeSizeZ);
+                ImGui::InputInt("MaxLevel", &maxLevel);
+
                 ImGui::Separator();
                 ImGui::Text("Rotação da primitiva (em graus):");
                 ImGui::SetNextItemWidth(60.0f);
@@ -234,18 +247,17 @@ void Interface::RenderDetailsSection(const std::vector<std::string>& objectNames
 
             if (ImGui::Button("Aplicar") && OnCreateCube && OnCreateCSGCube) {
                 if (selectCollection == ObjectToolCollection::Octree) OnCreateCube(label, cubeSizeX, cubeSizeY, cubeSizeZ, maxLevel, rotationX, rotationY, rotationZ);
-                else if (selectCollection == ObjectToolCollection::CSG) OnCreateCSGCube(label, cubeSizeX, cubeSizeY, cubeSizeZ);
+                else if (selectCollection == ObjectToolCollection::CSG) OnCreateCSGCube(label);
                 ResetInputs();
             }
             break;
 
         case ToolType::Cylinder:
             ImGui::InputText("Nome", &label);
-            ImGui::InputFloat("Raio", &cylinderRadius);
-            ImGui::InputFloat("Altura", &cylinderHeight);
-            if (selectCollection == ObjectToolCollection::Octree) ImGui::InputInt("MaxLevel", &maxLevel);
-
             if (selectCollection == ObjectToolCollection::Octree) {
+                ImGui::InputFloat("Raio", &cylinderRadius);
+                ImGui::InputFloat("Altura", &cylinderHeight);
+                ImGui::InputInt("MaxLevel", &maxLevel);
                 ImGui::Separator();
                 ImGui::Text("Rotação da primitiva (em graus):");
                 ImGui::SetNextItemWidth(60.0f);
@@ -260,18 +272,17 @@ void Interface::RenderDetailsSection(const std::vector<std::string>& objectNames
 
             if (ImGui::Button("Aplicar") && OnCreateCylinder && OnCreateCSGCylinder) {
                 if (selectCollection == ObjectToolCollection::Octree) OnCreateCylinder(label, cylinderRadius, cylinderHeight, maxLevel, rotationX, rotationY, rotationZ);
-                else if (selectCollection == ObjectToolCollection::CSG) OnCreateCSGCylinder(label, cylinderRadius, cylinderHeight);
+                else if (selectCollection == ObjectToolCollection::CSG) OnCreateCSGCylinder(label);
                 ResetInputs();
             }
             break;
 
         case ToolType::Cone:
             ImGui::InputText("Nome", &label);
-            ImGui::InputFloat("Raio", &coneRadius);
-            ImGui::InputFloat("Altura", &coneHeight);
-            if (selectCollection == ObjectToolCollection::Octree) ImGui::InputInt("MaxLevel", &maxLevel);
-
             if (selectCollection == ObjectToolCollection::Octree) {
+                ImGui::InputFloat("Raio", &coneRadius);
+                ImGui::InputFloat("Altura", &coneHeight);
+                ImGui::InputInt("MaxLevel", &maxLevel);
                 ImGui::Separator();
                 ImGui::Text("Rotação da primitiva (em graus):");
                 ImGui::SetNextItemWidth(60.0f);
@@ -286,7 +297,7 @@ void Interface::RenderDetailsSection(const std::vector<std::string>& objectNames
 
             if (ImGui::Button("Aplicar") && OnCreateCone && OnCreateCSGCone) {
                 if (selectCollection == ObjectToolCollection::Octree) OnCreateCone(label, coneRadius, coneHeight, maxLevel, rotationX, rotationY, rotationZ);
-                else if (selectCollection == ObjectToolCollection::CSG) OnCreateCSGCone(label, coneRadius, coneHeight);
+                else if (selectCollection == ObjectToolCollection::CSG) OnCreateCSGCone(label);
 
                 ResetInputs();
             }
@@ -516,8 +527,34 @@ void Interface::RenderDetailsSection(const std::vector<std::string>& objectNames
                     renderResolutionY = 1080;
                 }
 
+                ImGui::Text("Raio de Debug");
+                ImGui::Checkbox("Usar raio de debug", &useDebugRay);
+
+                if (useDebugRay) {
+                    ImGui::Text("Origem (Ponto)");
+                    ImGui::SetNextItemWidth(70.0f);
+                    ImGui::InputFloat("O.X", &debugRayOrigin.x);
+                    ImGui::SameLine();
+                    ImGui::SetNextItemWidth(70.0f);
+                    ImGui::InputFloat("O.Y", &debugRayOrigin.y);
+                    ImGui::SameLine();
+                    ImGui::SetNextItemWidth(70.0f);
+                    ImGui::InputFloat("O.Z", &debugRayOrigin.z);
+
+                    ImGui::Text("Direção (Vetor)");
+                    ImGui::SetNextItemWidth(70.0f);
+                    ImGui::InputFloat("D.X", &debugRayDirection.x);
+                    ImGui::SameLine();
+                    ImGui::SetNextItemWidth(70.0f);
+                    ImGui::InputFloat("D.Y", &debugRayDirection.y);
+                    ImGui::SameLine();
+                    ImGui::SetNextItemWidth(70.0f);
+                    ImGui::InputFloat("D.Z", &debugRayDirection.z);
+                }
+
                 if (ImGui::Button("Aplicar") && OnRenderObject) {
-                    OnRenderObject(exportFileName, renderResolutionX, renderResolutionY);
+                    Ray debugRay(debugRayOrigin, debugRayDirection);
+                    OnRenderObject(exportFileName, renderResolutionX, renderResolutionY, useDebugRay, debugRay);
                     ResetInputs();
                 }
                 ImGui::EndDisabled();
@@ -539,6 +576,13 @@ void Interface::RenderDetailsSection(const std::vector<std::string>& objectNames
                 if (ImGui::Button("Aplicar") && OnExportObject) {
                     OnExportObject(exportFileName);
                     ResetInputs();
+                }
+                if (selectCollection == ObjectToolCollection::CSG) {
+                    ImGui::SameLine();
+                    if (ImGui::Button("Aplicar (Legado)") && OnExportLegacyObject) {
+                        OnExportLegacyObject(exportFileName);
+                        ResetInputs();
+                    }
                 }
                 ImGui::EndDisabled();
             }
@@ -567,9 +611,17 @@ void Interface::RenderDetailsSection(const std::vector<std::string>& objectNames
             ImGui::EndChild();
 
             ImGui::BeginDisabled(selectedImportFile.empty());
-            if (ImGui::Button("Gerar Octree") && OnImportObject) {
-                OnImportObject(selectedImportFile);
+            if (ImGui::Button("Aplicar") && OnImportObject && OnImportCSGObject) {
+                if (selectCollection == ObjectToolCollection::Octree) OnImportObject(selectedImportFile);
+                if (selectCollection == ObjectToolCollection::CSG) OnImportCSGObject(selectedImportFile);
                 ResetInputs();
+            }
+            if (selectCollection == ObjectToolCollection::CSG) {
+                ImGui::SameLine();
+                if (ImGui::Button("Aplicar (Legado)") && OnImportLegacyCSGObject) {
+                    OnImportLegacyCSGObject(selectedImportFile);
+                    ResetInputs();
+                }
             }
             ImGui::EndDisabled();
 

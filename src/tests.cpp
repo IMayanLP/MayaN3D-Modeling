@@ -209,6 +209,28 @@ int main() {
     else std::cout << "Erro ao salvar a imagem.\n";
 
 
+    Sphere sphereA(1);
+    Cube cube(1.7f, 1.7f, 1.7f);
+
+    std::unique_ptr<CSGNode> nodeA = CSG::CreatePrimitiveNode(sphereA);
+    std::unique_ptr<CSGNode> nodeB = CSG::CreatePrimitiveNode(cube);
+    std::unique_ptr<CSGNode> nodeC = CSG::CreatePrimitiveNode(sphereA);
+
+    std::unique_ptr<CSGNode> transformNode = CSG::CreateTransformNode(TransformType::Scale, {1.2f, 1.5f, 1.2f}, std::move(nodeA));
+    std::unique_ptr<CSGNode> transformNode2 = CSG::CreateTransformNode(TransformType::Rotation, {glm::radians(45.0f), 1.0f, 0.0f}, std::move(transformNode));
+    std::unique_ptr<CSGNode> transformNode3 = CSG::CreateTransformNode(TransformType::Translation, {0.0f, 1.0f, 0.0f}, std::move(transformNode2));
+    std::unique_ptr<CSGNode> differenceNode = CSG::CreateBooleanNode(BooleanOperation::Difference, std::move(nodeB), std::move(transformNode3));
+
+    std::unique_ptr<CSGNode> unionNode = CSG::CreateBooleanNode(BooleanOperation::Union, std::move(differenceNode), std::move(nodeC));
+
+    CSG differenceCSG;
+    differenceCSG.SetRoot(std::move(unionNode));
+
+    if (differenceCSG.ExportLegacy("teste")) {
+        std::cout << "CSG exportado com sucesso!" << std::endl;
+    }
+
+
 
 
     return 0;
