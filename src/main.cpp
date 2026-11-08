@@ -236,9 +236,6 @@ int main() {
 
     UI.OnRotateCSGObject = [&scene](glm::vec3 t) {
         if (scene.getSelectedObjectType() == ObjectType::CSG) {
-            std::cout << "t.x:" << t.x << " | Em rad: " << glm::radians(t.x) << std::endl;
-            std::cout << "t.y:" << t.y << " | Em rad: " << glm::radians(t.y) << std::endl;
-            std::cout << "t.z:" << t.z << " | Em rad: " << glm::radians(t.z) << std::endl;
             std::unique_ptr<CSGNode> root = scene.getSelectedCSG().GetAndFreeRoot();
 
             std::unique_ptr<CSGNode> rotationNode = CSG::CreateTransformNode(TransformType::Rotation, {glm::radians(t.x), glm::radians(t.y), glm::radians(t.z)}, std::move(root));

@@ -133,9 +133,9 @@ std::vector<RayIntersection> Cone::IntersectRay(const Ray& ray) const {
     float inclination2 = inclination * inclination;
     float topVertexDist = halfHeight - origin.y;
 
-    float a = direction.x * direction.x + direction.z * direction.z - inclination * direction.y * direction.y;
-    float b = 2.0f * (origin.x * direction.x + origin.z * direction.z + inclination * topVertexDist * direction.y);
-    float c = origin.x * origin.x + origin.z * origin.z - inclination * topVertexDist * topVertexDist;
+    float a = direction.x * direction.x + direction.z * direction.z - inclination2 * direction.y * direction.y;
+    float b = 2.0f * (origin.x * direction.x + origin.z * direction.z + inclination2 * topVertexDist * direction.y);
+    float c = origin.x * origin.x + origin.z * origin.z - inclination2 * topVertexDist * topVertexDist;
 
     if (std::abs(a) < 1e-6f) {
         if (std::abs(b) > 1e-6f) {

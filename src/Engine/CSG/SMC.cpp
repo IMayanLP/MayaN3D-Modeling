@@ -117,14 +117,10 @@ std::vector<SMCInterval> SMC::ClassifyTransform(const CSGNode* node, const Ray& 
 
         for (SMCInterval& interval : intervals) {
             interval.start.intersection.point *= scale;
-
             if (std::isfinite(interval.start.intersection.t)) {
                 interval.start.intersection.t = glm::dot(interval.start.intersection.point - ray.GetOrigin(), ray.GetDirection());
             }
-
-            interval.start.intersection.normal = glm::normalize(
-                interval.start.intersection.normal / scale
-            );
+            interval.start.intersection.normal = glm::normalize(interval.start.intersection.normal / scale);
 
             if (std::isfinite(interval.end.intersection.t)) {
                 interval.end.intersection.point *= scale;

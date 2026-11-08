@@ -26,5 +26,5 @@ class SMC {
         static std::vector<SMCInterval> NormalizeIntervals(const std::vector<SMCInterval>&, const std::vector<SMCInterval>&);
         static std::vector<SMCInterval> MergeIntervals(const std::vector<SMCInterval>&);
 
-        static std::vector<RayIntersection> IntersectRayInCell(const Ray&, const Cell&);
+        static std::vector<RayIntersection> IntersectRayInCell(const Ray&, const Cell&); // nem usei no final, F
 };

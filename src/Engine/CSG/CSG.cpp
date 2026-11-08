@@ -548,7 +548,7 @@ static std::vector<std::string> Split(const std::string& text, char delimiter) {
 }
 
 static std::unique_ptr<CSGNode> GetNode(std::vector<ImportedNode>& nodes, const std::string& label) {
-    for (int i = 0; i < static_cast<int>(nodes.size()); i++) {
+    for (int i = 0; i < nodes.size(); i++) {
         if (nodes[i].label == label) {
             std::unique_ptr<CSGNode> node = std::move(nodes[i].node);
 
