@@ -4,12 +4,19 @@
 
 #include "../Engine/Octree/Octree.h"
 #include "../Engine/Object/Object.h"
+#include "../Ray/RayCast.h"
+#include "../Ray/RayCastTexture.h"
 #include "Renderer.h"
 #include <iostream>
 
 enum class SceneState {
     Static,
     onMoving
+};
+
+enum class RenderType {
+    Default,
+    RayCast
 };
 
 class Scene {
@@ -36,6 +43,11 @@ public:
     CSG& getSecondSelectedCSG();
     void addCSG(CSG&&);
 
+    Object& getSelectedObject();
+    Object& getSecondSelectedObject();
+
+    std::vector<Object>& getObjects();
+
     void updateOctreeFromSelectedCSG();
 
     std::size_t getObjectsSize() const;
@@ -46,14 +58,18 @@ public:
     void resetSelectedIndex();
     void resetSecondSelectedIndex();
 
-
     void toggleSelectedVisibility();
 
-    void RenderScene(Renderer&, Shader&);
+    void RenderScene(Renderer&, Shader&, Camera&, RayCastTexture&, RayCast&);
     std::vector<std::string> getObjectNames() const;
+
+    SceneState getSceneState() const;
+    RenderType getRenderType() const;
+    void toggleRenderType();
 
 private:
     SceneState state = SceneState::Static;
+    RenderType renderType = RenderType::Default;
     int maxLevelOnMoving = 4;
 
     std::vector<Object> objects = {};

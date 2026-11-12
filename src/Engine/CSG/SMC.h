@@ -16,6 +16,7 @@ struct SMCInterval {
 class SMC {
     public:
         static std::vector<SMCInterval> Classify(const CSG&, const Ray&);
+        static std::vector<RayIntersection> IntersectRayInCell(const Ray&, const Cell&); // nem usei no final, F
 
     private:
         static std::vector<SMCInterval> ClassifyNode(const CSGNode*, const Ray&);
@@ -25,6 +26,4 @@ class SMC {
 
         static std::vector<SMCInterval> NormalizeIntervals(const std::vector<SMCInterval>&, const std::vector<SMCInterval>&);
         static std::vector<SMCInterval> MergeIntervals(const std::vector<SMCInterval>&);
-
-        static std::vector<RayIntersection> IntersectRayInCell(const Ray&, const Cell&); // nem usei no final, F
 };

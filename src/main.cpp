@@ -27,6 +27,7 @@
 #include "Engine/CSG/CSG.h"
 #include "Engine/Ray/Ray.h"
 #include "Engine/Ray/RayCast.h"
+#include "Engine/Ray/RayCastTexture.h"
 #include "Engine/CSG/SMC.h"
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
@@ -411,7 +412,7 @@ int main() {
     UI.OnRenderObject = [&scene, &camera](std::string fileName, int resolutionX, int resolutionY, bool useDebugRay, Ray ray) {
         RayCast rayCast;
 
-        std::vector<unsigned char> pixels = rayCast.Render(scene.getSelectedCSG(), camera, resolutionX, resolutionY, {0.0, 0.8, 1.0}, useDebugRay, ray);
+        std::vector<unsigned char> pixels = rayCast.Render(scene.getObjects(), camera, resolutionX, resolutionY, {0.0f, 0.8f, 1.0f}, useDebugRay, ray);
         std::cout << "Pixels gerados: " << pixels.size() << '\n';
 
         std::string filename = "files/images/" + fileName + ".png";
@@ -421,8 +422,17 @@ int main() {
         else std::cout << "Erro ao salvar a imagem.\n";
     };
 
+    UI.OnToggleRenderType = [&scene]() {
+        scene.toggleRenderType();
+    };
+
     float deltaTime = 0.0f;
     float lastFrame = 0.0f;
+
+    RayCastTexture rayCastTexture;
+    RayCast rayCast;
+
+    rayCastTexture.Initialize(200, 150);
 
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
@@ -498,10 +508,6 @@ int main() {
 
         scene.setSceneState(isMoving ? SceneState::onMoving : SceneState::Static);
 
-        UI.Render(navBarSize, scene.getObjectNames());
-        ImGui::Render();
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
         // draw objects
         glm::mat4 projection = glm::perspective(
             glm::radians(45.0f),
@@ -515,7 +521,21 @@ int main() {
         globalShader.SetMat4("view", camera.GetViewMatrix());
         globalShader.SetMat4("projection", projection);
 
-        scene.RenderScene(renderer, globalShader);
+        scene.RenderScene(renderer, globalShader, camera, rayCastTexture, rayCast);
+
+        if (scene.getRenderType() == RenderType::RayCast) {
+            ImGui::SetNextWindowPos(ImVec2(navBarSize, 0.0f));
+            ImGui::SetNextWindowSize(ImVec2(viewportWidth, viewportHeight));
+
+            ImGui::Begin( "Viewport", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoBringToFrontOnFocus);
+            ImGui::Image((ImTextureID)(intptr_t)rayCastTexture.GetTexture(), ImGui::GetContentRegionAvail(), ImVec2(0, 0), ImVec2(1, 1));
+
+            ImGui::End();
+        }
+
+        UI.Render(navBarSize, scene.getObjectNames());
+        ImGui::Render();
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
         glfwSwapBuffers(window);
     }

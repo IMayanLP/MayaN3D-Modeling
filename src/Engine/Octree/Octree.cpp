@@ -1001,3 +1001,7 @@ std::vector<Triangle> Octree::GenerateMesh() const {
 
     return mesh;
 }
+
+const Cell& Octree::GetCell() const {
+    return root->cell;
+}

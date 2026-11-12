@@ -62,6 +62,18 @@ CSG& Scene::getSecondSelectedCSG() {
     return objects.at(secondSelectedObject).csg;
 }
 
+Object& Scene::getSelectedObject() {
+    return objects.at(selectedObject);
+}
+
+Object& Scene::getSecondSelectedObject() {
+    return objects.at(secondSelectedObject);
+}
+
+std::vector<Object>& Scene::getObjects() {
+    return objects;
+}
+
 void Scene::addOctree(Octree&& octree) {
     std::vector<Triangle> mesh = octree.GenerateMesh();
 
@@ -126,14 +138,35 @@ void Scene::toggleSelectedVisibility() {
     if (selectedObject > -1) objects[selectedObject].visible = !objects[selectedObject].visible;
 }
 
-void Scene::RenderScene(Renderer& renderer, Shader& shader) {
-    for (Object& o : objects) {
-        if (!o.visible) continue;
+void Scene::RenderScene(Renderer& renderer, Shader& shader, Camera& camera, RayCastTexture& rayCastTexture, RayCast& rayCast) {
+    if (renderType == RenderType::RayCast) {
+        int renderWidth;
+        int renderHeight;
 
         if (state == SceneState::Static) {
-            if (!showWireframe) renderer.DrawMesh(o.mesh, shader, o.octree.GetScale(), o.octree.GetTranslation());
-            else renderer.DrawOctree(o.octree.GetRoot(), shader, showWireframe, showCell, 0, o.octree.GetMaxLevel());
-        } else renderer.DrawOctree(o.octree.GetRoot(), shader, showWireframe, showCell, 0, maxLevelOnMoving);
+            renderWidth = 320;
+            renderHeight = 225;
+        } else {
+            renderWidth = 200;
+            renderHeight = 150;
+        }
+
+        rayCastTexture.Resize(renderWidth, renderHeight);
+
+        Ray debugRay({0, 0, 0}, {0, 0, 1});
+
+        std::vector<unsigned char> pixels = rayCast.Render(objects, camera, renderWidth, renderHeight, {0.0f, 0.8f, 1.0f}, false, debugRay);
+
+        rayCastTexture.Update(pixels);
+    } else {
+        for (Object& o : objects) {
+            if (!o.visible) continue;
+
+            if (state == SceneState::Static) {
+                if (!showWireframe) renderer.DrawMesh(o.mesh, shader, o.octree.GetScale(), o.octree.GetTranslation());
+                else renderer.DrawOctree(o.octree.GetRoot(), shader, showWireframe, showCell, 0, o.octree.GetMaxLevel());
+            } else renderer.DrawOctree(o.octree.GetRoot(), shader, showWireframe, showCell, 0, maxLevelOnMoving);
+        }
     }
 }
 
@@ -151,4 +184,17 @@ std::vector<std::string> Scene::getObjectNames() const {
     }
 
     return objectNames;
+}
+
+SceneState Scene::getSceneState() const {
+    return state;
+}
+
+RenderType Scene::getRenderType() const {
+    return renderType;
+}
+
+void Scene::toggleRenderType() {
+    if (renderType == RenderType::Default) renderType = RenderType::RayCast;
+    else renderType = RenderType::Default;
 }

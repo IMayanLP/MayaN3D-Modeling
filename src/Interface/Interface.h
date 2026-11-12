@@ -95,6 +95,8 @@ class Interface {
         std::function<void(std::string fileName)> OnImportLegacyCSGObject;
         std::function<void(std::string fileName, int, int, bool, Ray)> OnRenderObject;
 
+        std::function<void()> OnToggleRenderType;
+
         void ResetSelection();
         void ResetInputs();
         void ResetTransformValues();

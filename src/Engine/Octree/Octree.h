@@ -60,6 +60,7 @@ class Octree {
 
         // otimização
         std::vector<Triangle> GenerateMesh() const;
+        const Cell& GetCell() const;
 
     private:
         std::string label = "";

@@ -146,6 +146,8 @@ void Interface::RenderToolsSection() {
         if (ImGui::Button("Wireframe", buttonSize) && toggleWireframe) toggleWireframe();
         ImGui::SameLine();
         if (ImGui::Button("Celulas", buttonSize) && toggleCell) toggleCell();
+        ImGui::SameLine();
+        if (ImGui::Button("RayCast", buttonSize) && OnToggleRenderType) OnToggleRenderType();
     } else if (selectCollection == ObjectToolCollection::CSG) {
         // primitivas
         if (ImGui::Button("Esfera", buttonSize)) selectedTool = ToolType::Sphere;
@@ -179,6 +181,8 @@ void Interface::RenderToolsSection() {
         if (ImGui::Button("Importar", buttonSize)) selectedTool = ToolType::Import;
         ImGui::SameLine();
         if (ImGui::Button("Render", buttonSize)) selectedTool = ToolType::Render;
+        ImGui::SameLine();
+        if (ImGui::Button("RayCast", buttonSize) && OnToggleRenderType) OnToggleRenderType();
     } else if (selectCollection == ObjectToolCollection::BREP) {
         ImGui::Text("Em breve");
     }
