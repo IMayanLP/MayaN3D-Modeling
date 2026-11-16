@@ -5,7 +5,11 @@
 #include <string>
 #include <functional>
 
+#include <ImGuizmo.h>
+#include <glm/gtc/type_ptr.hpp>
+
 #include "Octree.h"
+#include "../Graphics/Camera.h"
 
 extern ImGuiWindowFlags flags;
 
@@ -101,6 +105,7 @@ class Interface {
         void ResetInputs();
         void ResetTransformValues();
 
+        void DrawCameraGizmo(const Camera&, int, int);
     private:
         void RenderCollectionToolsSection();
 

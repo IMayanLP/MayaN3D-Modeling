@@ -28,7 +28,7 @@
 #include "Engine/Ray/Ray.h"
 #include "Engine/Ray/RayCast.h"
 #include "Engine/Ray/RayCastTexture.h"
-#include "Engine/CSG/SMC.h"
+#include "Engine/BRep/BRep.h"
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "../lib/stb_image_write.h"
@@ -461,6 +461,7 @@ int main() {
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
+        ImGuizmo::BeginFrame();
 
         bool isMoving = false;
 
@@ -532,6 +533,8 @@ int main() {
 
             ImGui::End();
         }
+
+        UI.DrawCameraGizmo(camera, navBarSize, viewportWidth);
 
         UI.Render(navBarSize, scene.getObjectNames());
         ImGui::Render();

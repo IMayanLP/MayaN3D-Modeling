@@ -9,6 +9,11 @@
 #include <functional>
 #include <algorithm>
 
+#include "../Primitives/Sphere.h"
+#include "../Primitives/Cube.h"
+#include "../Primitives/Cone.h"
+#include "../Primitives/Cylinder.h"
+
 void CSG::SetRoot(std::unique_ptr<CSGNode> node) {
     root = std::move(node);
 }

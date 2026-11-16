@@ -4,10 +4,6 @@
 #include <memory>
 
 #include "../Primitives/Primitive.h"
-#include "../Primitives/Sphere.h"
-#include "../Primitives/Cube.h"
-#include "../Primitives/Cone.h"
-#include "../Primitives/Cylinder.h"
 #include "../Primitives/Triangle.h"
 #include "../Octree/Octree.h"
 

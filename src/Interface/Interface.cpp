@@ -638,3 +638,55 @@ void Interface::RenderDetailsSection(const std::vector<std::string>& objectNames
             break;
     }
 }
+
+
+void Interface::DrawCameraGizmo(const Camera& camera, int navBarSize, int viewportWidth) {
+    const float gizmoSize = 80.0f;
+
+    ImGui::SetNextWindowPos(ImVec2(navBarSize + viewportWidth - gizmoSize, 0), ImGuiCond_Always);
+
+    ImGui::SetNextWindowSize(ImVec2(gizmoSize, gizmoSize), ImGuiCond_Always);
+
+    ImGui::Begin("CameraGizmo", nullptr,
+        ImGuiWindowFlags_NoDecoration |
+        ImGuiWindowFlags_NoMove |
+        ImGuiWindowFlags_NoResize |
+        ImGuiWindowFlags_NoSavedSettings |
+        ImGuiWindowFlags_NoBackground |
+        ImGuiWindowFlags_NoBringToFrontOnFocus |
+        ImGuiWindowFlags_NoScrollbar
+    );
+
+    ImDrawList* drawList = ImGui::GetWindowDrawList();
+
+    const ImVec2 center(ImGui::GetWindowPos().x + gizmoSize * 0.5f, ImGui::GetWindowPos().y + gizmoSize * 0.5f);
+
+    glm::mat3 viewRotation = glm::mat3(camera.GetViewMatrix());
+
+    const glm::vec3 axes[3] = {glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f)};
+    const ImU32 colors[3] = {IM_COL32(255, 70, 70, 255), IM_COL32(70, 220, 70, 255), IM_COL32(70, 140, 255, 255)};
+
+    for (int i = 0; i < 3; i++) {
+        glm::vec3 direction = viewRotation * axes[i];
+
+        ImVec2 endpoint(center.x + direction.x * 23.0f, center.y - direction.y * 23.0f);
+        glm::vec2 arrowDirection = glm::normalize(glm::vec2(endpoint.x - center.x, endpoint.y - center.y));
+
+        ImVec2 lineEnd(endpoint.x - arrowDirection.x * 2.0f, endpoint.y - arrowDirection.y * 2.0f);
+
+        drawList->AddLine(center, lineEnd, colors[i], 3.0f);
+
+        glm::vec2 perpendicular(-arrowDirection.y, arrowDirection.x);
+
+        ImVec2 tip = endpoint;
+        ImVec2 base(endpoint.x - arrowDirection.x * 9.0f, endpoint.y - arrowDirection.y * 9.0f);
+
+        drawList->AddTriangleFilled(tip,
+            ImVec2(base.x + perpendicular.x * 4.0f, base.y + perpendicular.y * 4.0f),
+            ImVec2(base.x - perpendicular.x * 4.0f, base.y - perpendicular.y * 4.0f),
+            colors[i]
+        );
+    }
+
+    ImGui::End();
+}
