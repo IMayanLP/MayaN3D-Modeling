@@ -16,11 +16,12 @@
 #include "Engine/CSG/CSG.h"
 #include "Engine/Ray/Ray.h"
 #include "Engine/CSG/SMC.h"
+#include "Engine/BRep/BRep.h"
 
 namespace fs = std::filesystem;
 
-void TestSMC(const std::string& description, const Primitive& primitive,
-             const glm::vec3& origin, const glm::vec3& direction) {
+void TestSMC(const std::string &description, Primitive &primitive,
+             const glm::vec3 &origin, const glm::vec3 &direction) {
     std::cout << "\n========================================\n";
     std::cout << "Teste: " << description << '\n';
     std::cout << "Origem: (" << origin.x << ", " << origin.y << ", " << origin.z << ")\n";
@@ -106,6 +107,7 @@ SMCInterval CreateTestInterval(float startT, float endT, SMCClassification class
 }
 
 int main() {
+    /**
     Sphere sphere(1.0f);
     Cube cube(2.0f, 2.0f, 2.0f);
     Cylinder cylinder(1.0f, 2.0f);
@@ -169,11 +171,12 @@ int main() {
     TestSMCTransform("Cylinder Translation", cylinderCSG, glm::vec3(2.0f, 0.0f, 3.0f), glm::vec3(0.0f, 0.0f, -1.0f));
     TestSMCTransform("Cone Translation", coneCSG, glm::vec3(2.0f, 0.0f, 3.0f), glm::vec3(0.0f, 0.0f, -1.0f));
 
+
     Sphere sphereA(1);
-    Cube cube(1.7f, 1.7f, 1.7f);
+    Cube cubeA(1.7f, 1.7f, 1.7f);
 
     std::unique_ptr<CSGNode> nodeA = CSG::CreatePrimitiveNode(sphereA);
-    std::unique_ptr<CSGNode> nodeB = CSG::CreatePrimitiveNode(cube);
+    std::unique_ptr<CSGNode> nodeB = CSG::CreatePrimitiveNode(cubeA);
     std::unique_ptr<CSGNode> differenceNode = CSG::CreateBooleanNode(BooleanOperation::Difference, std::move(nodeB), std::move(nodeA));
 
     CSG differenceCSG;
@@ -197,41 +200,28 @@ int main() {
     tree.setLabel("Teste a partir da CSG");
     tree.setMaxLevel(5);
 
-    scene.addOctree(std::move(tree));
 
-    RayCast rayCast;
-    std::vector<unsigned char> pixels = rayCast.Render(differenceCSG, camera, 400, 300, glm::vec3(1.0f, 0.0f, 0.0f));
-    std::cout << "Pixels gerados: " << pixels.size() << '\n';
+    Sphere sphereB(1);
+    Cube cubeB(1.7f, 1.7f, 1.7f);
 
-    int result = stbi_write_png("files/images/RayCast.png",400,300,3,pixels.data(),400 * 3);
+    std::unique_ptr<CSGNode> nodeAA = CSG::CreatePrimitiveNode(sphereA);
+    std::unique_ptr<CSGNode> nodeBA = CSG::CreatePrimitiveNode(cube);
+    std::unique_ptr<CSGNode> nodeCA = CSG::CreatePrimitiveNode(sphereA);
 
-    if (result) std::cout << "Imagem salva com sucesso!\n";
-    else std::cout << "Erro ao salvar a imagem.\n";
-
-
-    Sphere sphereA(1);
-    Cube cube(1.7f, 1.7f, 1.7f);
-
-    std::unique_ptr<CSGNode> nodeA = CSG::CreatePrimitiveNode(sphereA);
-    std::unique_ptr<CSGNode> nodeB = CSG::CreatePrimitiveNode(cube);
-    std::unique_ptr<CSGNode> nodeC = CSG::CreatePrimitiveNode(sphereA);
-
-    std::unique_ptr<CSGNode> transformNode = CSG::CreateTransformNode(TransformType::Scale, {1.2f, 1.5f, 1.2f}, std::move(nodeA));
+    std::unique_ptr<CSGNode> transformNode = CSG::CreateTransformNode(TransformType::Scale, {1.2f, 1.5f, 1.2f}, std::move(nodeAA));
     std::unique_ptr<CSGNode> transformNode2 = CSG::CreateTransformNode(TransformType::Rotation, {glm::radians(45.0f), 1.0f, 0.0f}, std::move(transformNode));
     std::unique_ptr<CSGNode> transformNode3 = CSG::CreateTransformNode(TransformType::Translation, {0.0f, 1.0f, 0.0f}, std::move(transformNode2));
-    std::unique_ptr<CSGNode> differenceNode = CSG::CreateBooleanNode(BooleanOperation::Difference, std::move(nodeB), std::move(transformNode3));
+    std::unique_ptr<CSGNode> differenceNodeA = CSG::CreateBooleanNode(BooleanOperation::Difference, std::move(nodeBA), std::move(transformNode3));
 
-    std::unique_ptr<CSGNode> unionNode = CSG::CreateBooleanNode(BooleanOperation::Union, std::move(differenceNode), std::move(nodeC));
+    std::unique_ptr<CSGNode> unionNode = CSG::CreateBooleanNode(BooleanOperation::Union, std::move(differenceNodeA), std::move(nodeCA));
 
-    CSG differenceCSG;
-    differenceCSG.SetRoot(std::move(unionNode));
+    CSG differenceCSGA;
+    differenceCSGA.SetRoot(std::move(unionNode));
+    **/
 
-    if (differenceCSG.ExportLegacy("teste")) {
-        std::cout << "CSG exportado com sucesso!" << std::endl;
-    }
-
-
-
+    BRep cube;
+    cube.CreateDebugCube();
+    cube.Print();
 
     return 0;
 }
