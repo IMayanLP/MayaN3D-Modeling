@@ -220,8 +220,9 @@ int main() {
     **/
 
     BRep cube;
-    cube.CreateDebugCube();
-    cube.Print();
+    //cube.CreateDebugCube();
+
+    cube.TestEuler();
 
     return 0;
 }

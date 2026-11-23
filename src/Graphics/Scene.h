@@ -3,6 +3,8 @@
 #include <glad/glad.h>
 
 #include "../Engine/Octree/Octree.h"
+#include "../Engine/CSG/CSG.h"
+#include "../Engine/BRep/BRep.h"
 #include "../Engine/Object/Object.h"
 #include "../Ray/RayCast.h"
 #include "../Ray/RayCastTexture.h"
@@ -42,6 +44,10 @@ public:
     CSG& getSelectedCSG();
     CSG& getSecondSelectedCSG();
     void addCSG(CSG&&);
+
+    BRep& getSelectedBRep();
+    BRep& getSecondSelectedBRep();
+    void addBRep(BRep&&);
 
     Object& getSelectedObject();
     Object& getSecondSelectedObject();

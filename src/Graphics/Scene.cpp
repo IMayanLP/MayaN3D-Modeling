@@ -62,6 +62,14 @@ CSG& Scene::getSecondSelectedCSG() {
     return objects.at(secondSelectedObject).csg;
 }
 
+BRep& Scene::getSelectedBRep() {
+    return objects.at(selectedObject).brep;
+}
+
+BRep& Scene::getSecondSelectedBRep() {
+    return objects.at(secondSelectedObject).brep;
+}
+
 Object& Scene::getSelectedObject() {
     return objects.at(selectedObject);
 }
@@ -94,6 +102,17 @@ void Scene::addCSG(CSG&& csg) {
 
     object.octree = object.csg.GenerateOctree();
     std::vector<Triangle> mesh = object.octree.GenerateMesh();
+    object.mesh = std::move(mesh);
+
+    objects.push_back(std::move(object));
+}
+
+void Scene::addBRep(BRep&& brep) {
+    Object object;
+    object.type = ObjectType::BRep;
+    object.brep = std::move(brep);
+
+    std::vector<Triangle> mesh = object.brep.TriangulateMesh();
     object.mesh = std::move(mesh);
 
     objects.push_back(std::move(object));
@@ -162,10 +181,14 @@ void Scene::RenderScene(Renderer& renderer, Shader& shader, Camera& camera, RayC
         for (Object& o : objects) {
             if (!o.visible) continue;
 
-            if (state == SceneState::Static) {
-                if (!showWireframe) renderer.DrawMesh(o.mesh, shader, o.octree.GetScale(), o.octree.GetTranslation());
-                else renderer.DrawOctree(o.octree.GetRoot(), shader, showWireframe, showCell, 0, o.octree.GetMaxLevel());
-            } else renderer.DrawOctree(o.octree.GetRoot(), shader, showWireframe, showCell, 0, maxLevelOnMoving);
+            if (o.type == ObjectType::Octree || o.type == ObjectType::CSG) {
+                if (state == SceneState::Static) {
+                    if (!showWireframe) renderer.DrawMesh(o.mesh, shader, o.octree.GetScale(), o.octree.GetTranslation());
+                    else renderer.DrawOctree(o.octree.GetRoot(), shader, showWireframe, showCell, 0, o.octree.GetMaxLevel());
+                } else renderer.DrawOctree(o.octree.GetRoot(), shader, showWireframe, showCell, 0, maxLevelOnMoving);
+            } else if (o.type == ObjectType::BRep) {
+                renderer.DrawMesh(o.mesh, shader, 1, {0.0f, 0.0f, 0.0f});
+            }
         }
     }
 }

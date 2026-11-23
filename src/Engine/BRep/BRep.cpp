@@ -1,4 +1,5 @@
-﻿#include "BRep.h"
+﻿#include <cmath>
+#include "BRep.h"
 
 void BRep::Print() const {
     std::cout << "\n========== VERTICES ==========\n";
@@ -130,6 +131,44 @@ void BRep::CreateDebugCube() {
     }
 
     DebugWingedEdge();
+}
+
+void BRep::TestEuler() {
+    auto contar = [&](const char* passo) {
+        int V = vertices.size(), E = edges.size(), F = faces.size();
+        std::cout << passo << "  V=" << V << " E=" << E << " F=" << F
+                  << "  V-E+F=" << (V - E + F) << "\n";
+    };
+
+    // ---- construção
+    auto [v0, f] = MVFS({0, 0, 0});
+    Vertex* v1 = MEV(f, v0, {1, 0,  0});
+    Vertex* v2 = MEV(f, v1, {1, 0, -1});
+    Vertex* v3 = MEV(f, v2, {0, 0, -1});
+    Face* fundo = MEF(f, v3, v0);
+
+    Vertex* v4 = MEV(f, v0, {0, 1,  0});
+    Vertex* v5 = MEV(f, v1, {1, 1,  0});
+    Vertex* v6 = MEV(f, v2, {1, 1, -1});
+    Vertex* v7 = MEV(f, v3, {0, 1, -1});
+
+    Face* s1 = MEF(f, v4, v5);
+    Face* s2 = MEF(f, v5, v6);
+    Face* s3 = MEF(f, v6, v7);
+    Face* s4 = MEF(f, v7, v4);
+    contar("cubo   ");                 // esperado: V=8 E=12 F=6, V-E+F=2
+    DebugWingedEdge();
+
+    // ---- desmontagem (ordem inversa)
+    KEF(s4->e); KEF(s3->e); KEF(s2->e); KEF(s1->e);
+    contar("sem lat");                 // V=8 E=8 F=2
+    KEV(v7->e, v7); KEV(v6->e, v6); KEV(v5->e, v5); KEV(v4->e, v4);
+    contar("base   ");                 // V=4 E=4 F=2
+    KEF(fundo->e);
+    KEV(v3->e, v3); KEV(v2->e, v2); KEV(v1->e, v1);
+    contar("1 vert ");                 // V=1 E=0 F=1
+    KVFS(v0, f);
+    contar("vazio  ");                 // V=0 E=0 F=0
 }
 
 void BRep::DebugWingedEdge() {
@@ -338,7 +377,7 @@ void BRep::DebugWingedEdge() {
         }
     }
 
-    std::cout << "\n========== RESULTADO ==========\n";
+    std::cout << "\n========== resultADO ==========\n";
 
     if (errors == 0) std::cout << "[OK] Todos os testes passaram!\n";
     else std::cout << "[FALHA] Total de erros encontrados: " << errors << '\n';
@@ -356,7 +395,165 @@ Edge* BRep::FindEdgeLinear(Vertex* vs, Vertex* ve) {
     return nullptr;
 }
 
-//
+
+
+
+
+// Triangular BRep
+float ProdVetorial2D(glm::vec2 a, glm::vec2 b, glm::vec2 c) {
+    return (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
+}
+
+bool isInside(glm::vec2 p, glm::vec2 a, glm::vec2 b, glm::vec2 c) {
+    return ProdVetorial2D(a, b, p) >= 0 && ProdVetorial2D(b, c, p) >= 0 && ProdVetorial2D(c, a, p) >= 0;
+}
+
+void newTriangle(std::vector<Triangle>& mesh, const std::vector<Vertex*>& vs, bool isInverted, int i, int j, int k) {
+    if (isInverted) std::swap(j, k);
+    mesh.emplace_back(vs[i]->coords, vs[j]->coords, vs[k]->coords);
+}
+
+std::vector<Triangle> BRep::TriangulateMesh() {
+    std::vector<Triangle> mesh;
+
+    for (std::unique_ptr<Face>& face : faces) {
+        std::vector<Vertex*> vs = GetVerticesOfFace(face.get());
+        int n = vs.size();
+        if (n < 3) continue;
+
+        glm::vec3 min = vs[0]->coords;
+        glm::vec3 max = vs[0]->coords;
+        for (Vertex* v : vs) {
+            min = glm::min(min, v->coords);
+            max = glm::max(max, v->coords);
+        }
+        glm::vec3 boundingBox = max - min;
+
+        int a = 0, b = 1;
+        if (boundingBox.x <= boundingBox.y && boundingBox.x <= boundingBox.z) {
+            a = 1;
+            b = 2;
+        }
+        else if (boundingBox.y <= boundingBox.x && boundingBox.y <= boundingBox.z) {
+            a = 0; 
+            b = 2;
+        }
+
+        std::vector<glm::vec2> p(n);
+        for (int i = 0; i < n; i++) p[i] = { vs[i]->coords[a], vs[i]->coords[b] };
+
+        std::vector<int> idx(n);
+        for (int i = 0; i < n; i++) idx[i] = i;
+
+        float area = 0.0f;
+        for (int i = 0; i < n; i++) {
+            glm::vec2 p0 = p[i];
+            glm::vec2 p1 = p[(i + 1) % n];
+            area += p0.x * p1.y - p1.x * p0.y;
+        }
+
+        bool isInverted = (area < 0);
+        if (isInverted) std::reverse(idx.begin(), idx.end());
+
+        while (idx.size() > 3) {
+            int m = idx.size();
+            bool cortou = false;
+
+            for (int i = 0; i < m; i++) {
+                int ia = idx[(i + m - 1) % m];
+                int ib = idx[i];
+                int ic = idx[(i + 1) % m];
+
+                if (ProdVetorial2D(p[ia], p[ib], p[ic]) <= 0) continue;
+
+                bool vazia = true;
+                for (int j : idx) {
+                    if (j == ia || j == ib || j == ic) continue;
+                    if (isInside(p[j], p[ia], p[ib], p[ic])) { vazia = false; break; }
+                }
+                if (!vazia) continue;
+
+                newTriangle(mesh, vs, isInverted, ia, ib, ic);
+                idx.erase(idx.begin() + i);
+                cortou = true;
+                break;
+            }
+
+            if (!cortou) {
+                newTriangle(mesh, vs, isInverted, idx[m - 1], idx[0], idx[1]);
+                idx.erase(idx.begin());
+            }
+        }
+        
+        newTriangle(mesh, vs, isInverted, idx[0], idx[1], idx[2]);
+    }
+    return mesh;
+}
+
+
+
+
+
+// Primitivas
+void BRep::CreateEulerCube() {
+    auto [v0, f] = MVFS({-0.5f, -0.5f,  0.5f});
+    Vertex* v1 = MEV(f, v0, { 0.5f, -0.5f,  0.5f});
+    Vertex* v2 = MEV(f, v1, { 0.5f, -0.5f, -0.5f});
+    Vertex* v3 = MEV(f, v2, {-0.5f, -0.5f, -0.5f});
+    Face* fundo = MEF(f, v3, v0);
+
+    Vertex* v4 = MEV(f, v0, {-0.5f,  0.5f,  0.5f});
+    Vertex* v5 = MEV(f, v1, { 0.5f,  0.5f,  0.5f});
+    Vertex* v6 = MEV(f, v2, { 0.5f,  0.5f, -0.5f});
+    Vertex* v7 = MEV(f, v3, {-0.5f,  0.5f, -0.5f});
+
+    Face* s1 = MEF(f, v4, v5);
+    Face* s2 = MEF(f, v5, v6);
+    Face* s3 = MEF(f, v6, v7);
+    Face* s4 = MEF(f, v7, v4);
+}
+
+glm::vec3 getSpherePoint(int j, int i, int camadas, int fatias, float radius) {
+    const float PI = 3.14159265f;
+    float phi = PI * j / camadas;
+    float theta = 2.0f * PI * i / fatias;
+
+    float r = radius * std::sin(phi);
+    return {r * std::cos(theta), -radius * std::cos(phi), -r * std::sin(theta)};
+}
+
+void BRep::CreateEulerSphere(int res) {
+    int fatias  = res;
+    int camadas = res / 2;
+    float radius = 0.5f;
+
+    std::vector<Vertex*> anel(fatias);
+
+    auto [v0, f] = MVFS(getSpherePoint(1, 0, camadas, fatias, radius));
+    anel[0] = v0;
+
+    for (int i = 1; i < fatias; i++) anel[i] = MEV(f, anel[i - 1], getSpherePoint(1, i, camadas, fatias, radius));
+    Face* bottomFace = MEF(f, anel[fatias - 1], anel[0]);
+    std::vector<Vertex*> base = anel;
+
+    for (int j = 2; j < camadas; j++) {
+        std::vector<Vertex*> anterior = anel;
+        for (int i = 0; i < fatias; i++) anel[i] = MEV(f, anterior[i], getSpherePoint(j, i, camadas, fatias, radius));
+        for (int i = 0; i < fatias; i++) MEF(f, anel[i], anel[(i + 1) % fatias]);
+    }
+
+    Vertex* top = MEV(f, anel[0], {0.0f, radius, 0.0f});
+    for (int i = 1; i < fatias; i++) MEF(f, top, anel[i]);
+
+    Vertex* bottom = MEV(bottomFace, base[0], {0.0f, -radius, 0.0f});
+    for (int i = fatias - 1; i >= 1; i--) MEF(bottomFace, bottom, base[i]);
+}
+
+
+
+
+
+// ADJACENCIAS
 Edge* BRep::FindEdge(Vertex* vs, Vertex* ve) {
     if (vs == nullptr || ve == nullptr || vs == ve || vs->e == nullptr) return nullptr;
 
@@ -379,64 +576,68 @@ Edge* BRep::FindEdge(Vertex* vs, Vertex* ve) {
     return nullptr;
 }
 
-std::vector<Edge*> BRep::GetEdgesOfFace(Face* face) {
+std::vector<Edge*> BRep::GetEdgesOfFace(Face* f) {
     std::vector<Edge*> result;
+    if (f == nullptr || f->e == nullptr) return result;
 
-    if (face == nullptr || face->e == nullptr) return result;
+    Edge* e = f->e;
+    Edge* start = e;
 
-    Edge* start = face->e;
-    Edge* current = start;
+    bool isCCW = (e->fccw == f);
+    bool startIsCCW = isCCW;
     int iterations = 0;
 
     do {
-        result.push_back(current);
-
-        if (current->fcw == face) current = current->ncw;
-        else if (current->fccw == face) current = current->nccw;
-        else return {};
-
-        if (current == nullptr) return {};
+        result.push_back(e);
+        Vertex* currentEnd = isCCW ? e->ve : e->vs;
+        e = isCCW ? e->nccw : e->ncw;
+        if (e == nullptr) return {};
+        isCCW = (e->vs == currentEnd);
 
         iterations++;
-        if (iterations > edges.size()) return {};
-    } while (current != start);
+        if (iterations > 2 * edges.size()) return {};
+    } while (e != start || isCCW != startIsCCW);
 
     return result;
 }
 
-std::vector<Vertex*> BRep::GetVerticesOfFace(Face* face) {
+std::vector<Vertex*> BRep::GetVerticesOfFace(Face* f) {
     std::vector<Vertex*> result;
+    if (!f->e) return result;
 
-    std::vector<Edge*> faceEdges = GetEdgesOfFace(face);
-    if (faceEdges.empty()) return result;
+    Edge* e = f->e;
+    Edge* start = e;
 
-    for (Edge* edge : faceEdges) {
-        result.push_back(edge->vs);
-    }
+    bool isCCW = (e->fccw == f);
+    bool startIsCCW = isCCW;
+    int iterations = 0;
 
+    do {
+        result.push_back(isCCW ? e->vs : e->ve);
+        Vertex* fim = isCCW ? e->ve : e->vs;
+        e = isCCW ? e->nccw : e->ncw;
+        isCCW = (e->vs == fim);
+
+        iterations++;
+        if (iterations > 2 * edges.size()) return {};
+    } while (e != start || isCCW != startIsCCW);
     return result;
 }
 
-std::vector<Face*> BRep::GetFacesOfVertex(Vertex* vertex) {
+std::vector<Face*> BRep::GetFacesOfVertex(Vertex* v) {
     std::vector<Face*> result;
+    if (v == nullptr || v->e == nullptr) return result;
 
-    if (vertex == nullptr || vertex->e == nullptr) return result;
-
-    Edge* start = vertex->e;
+    Edge* start = v->e;
     Edge* current = start;
     int iterations = 0;
 
     do {
-        if (current->fcw != nullptr && std::find(result.begin(), result.end(), current->fcw) == result.end()) {
-            result.push_back(current->fcw);
-        }
+        if (current->fcw != nullptr && std::find(result.begin(), result.end(), current->fcw) == result.end()) result.push_back(current->fcw);
+        if (current->fccw != nullptr && std::find(result.begin(), result.end(), current->fccw) == result.end()) result.push_back(current->fccw);
 
-        if (current->fccw != nullptr && std::find(result.begin(), result.end(), current->fccw) == result.end()) {
-            result.push_back(current->fccw);
-        }
-
-        if (current->vs == vertex) current = current->pccw;
-        else if (current->ve == vertex) current = current->pcw;
+        if (current->vs == v) current = current->pccw;
+        else if (current->ve == v) current = current->pcw;
         else return {};
 
         if (current == nullptr) return {};
@@ -448,21 +649,19 @@ std::vector<Face*> BRep::GetFacesOfVertex(Vertex* vertex) {
     return result;
 }
 
-std::vector<Edge*> BRep::GetEdgesOfVertex(Vertex* vertex) {
+std::vector<Edge*> BRep::GetEdgesOfVertex(Vertex* v) {
     std::vector<Edge*> result;
+    if (v == nullptr || v->e == nullptr) return result;
 
-    if (vertex == nullptr || vertex->e == nullptr) return result;
-
-    Edge* start = vertex->e;
+    Edge* start = v->e;
     Edge* current = start;
     int iterations = 0;
 
     do {
-        if (current->vs != vertex && current->ve != vertex) return {};
-
+        if (current->vs != v && current->ve != v) return {};
         result.push_back(current);
 
-        if (current->vs == vertex) current = current->pccw;
+        if (current->vs == v) current = current->pccw;
         else current = current->pcw;
 
         if (current == nullptr) return {};
@@ -474,25 +673,226 @@ std::vector<Edge*> BRep::GetEdgesOfVertex(Vertex* vertex) {
     return result;
 }
 
-std::vector<Face*> BRep::GetAdjacentFaces(Face* face) {
+std::vector<Face*> BRep::GetAdjacentFaces(Face* f) {
     std::vector<Face*> result;
+    if (f == nullptr) return result;
 
-    if (face == nullptr) return result;
+    std::vector<Edge*> edges = GetEdgesOfFace(f);
+    if (edges.empty()) return result;
 
-    std::vector<Edge*> faceEdges = GetEdgesOfFace(face);
-    if (faceEdges.empty()) return result;
-
-    for (Edge* edge : faceEdges) {
+    for (Edge* e : edges) {
         Face* adjacentFace = nullptr;
 
-        if (edge->fcw == face) adjacentFace = edge->fccw;
-        else if (edge->fccw == face) adjacentFace = edge->fcw;
+        if (e->fcw == f) adjacentFace = e->fccw;
+        else if (e->fccw == f) adjacentFace = e->fcw;
 
-        if (adjacentFace != nullptr &&
-            std::find(result.begin(), result.end(), adjacentFace) == result.end()) {
+        if (adjacentFace != nullptr && adjacentFace != f && std::find(result.begin(), result.end(), adjacentFace) == result.end()) {
             result.push_back(adjacentFace);
-            }
+        }
     }
 
     return result;
+}
+
+
+
+
+
+
+// EULER AUX
+Vertex* BRep::NewVertex(glm::vec3 p) {
+    vertices.push_back(std::make_unique<Vertex>());
+    Vertex* v = vertices.back().get();
+    v->id = nextVertexId++;
+    v->coords = p;
+    return v;
+}
+
+Edge* BRep::NewEdge(Vertex* vs, Vertex* ve) {
+    edges.push_back(std::make_unique<Edge>());
+    Edge* e = edges.back().get();
+    e->id = nextEdgeId++;
+    e->vs = vs;
+    e->ve = ve;
+    return e;
+}
+
+Face* BRep::NewFace() {
+    faces.push_back(std::make_unique<Face>());
+    Face* f = faces.back().get();
+    f->id = nextFaceId++;
+    return f;
+}
+
+void BRep::RemoveVertex(Vertex* v) {
+    for (size_t i = 0; i < vertices.size(); i++) {
+        if (vertices[i].get() == v) {
+            vertices.erase(vertices.begin() + i);
+            return;
+        }
+    }
+}
+
+void BRep::RemoveEdge(Edge* e) {
+    for (size_t i = 0; i < edges.size(); i++) {
+        if (edges[i].get() == e) {
+            edges.erase(edges.begin() + i);
+            return;
+        }
+    }
+}
+
+void BRep::RemoveFace(Face* f) {
+    for (size_t i = 0; i < faces.size(); i++) {
+        if (faces[i].get() == f) {
+            faces.erase(faces.begin() + i);
+            return;
+        }
+    }
+}
+
+
+
+
+
+// EULER
+std::pair<Vertex*, Face*> BRep::MVFS(glm::vec3 p) {
+    return { NewVertex(p), NewFace() };
+}
+
+Vertex* BRep::MEV(Face* f, Vertex* v1, glm::vec3 p) {
+    Vertex* v2 = NewVertex(p);
+    Edge* e = NewEdge(v1, v2);
+    e->fccw = e->fcw = f;
+
+    if (!v1->e) {
+        e->nccw = e->pccw = e->ncw = e->pcw = e;
+        v1->e = e;
+        f->e = e;
+    } else {
+        Edge* b = f->e;
+        bool bccw = (b->fccw == f);
+        while ((bccw ? b->vs : b->ve) != v1) {
+            Vertex* fim = bccw ? b->ve : b->vs;
+            b = bccw ? b->nccw : b->ncw;
+            bccw = (b->vs == fim);
+        }
+        Edge* a = bccw ? b->pccw : b->pcw;
+        bool accw = (a->ve == v1);
+
+        e->pccw = a; e->nccw = e;
+        e->pcw  = e; e->ncw  = b;
+        if (accw) a->nccw = e; else a->ncw = e;
+        if (bccw) b->pccw = e; else b->pcw = e;
+    }
+    v2->e = e;
+    return v2;
+}
+
+Face* BRep::MEF(Face* f, Vertex* v1, Vertex* v2) {
+    Edge* b1 = f->e;
+    bool b1ccw = (b1->fccw == f);
+    while ((b1ccw ? b1->vs : b1->ve) != v1) {
+        Vertex* fim = b1ccw ? b1->ve : b1->vs;
+        b1 = b1ccw ? b1->nccw : b1->ncw;
+        b1ccw = (b1->vs == fim);
+    }
+    Edge* a1 = b1ccw ? b1->pccw : b1->pcw;
+    bool a1ccw = (a1->ve == v1);
+
+    Edge* b2 = f->e;
+    bool b2ccw = (b2->fccw == f);
+    while ((b2ccw ? b2->vs : b2->ve) != v2) {
+        Vertex* fim = b2ccw ? b2->ve : b2->vs;
+        b2 = b2ccw ? b2->nccw : b2->ncw;
+        b2ccw = (b2->vs == fim);
+    }
+    Edge* a2 = b2ccw ? b2->pccw : b2->pcw;
+    bool a2ccw = (a2->ve == v2);
+
+    Face* f2 = NewFace();
+    Edge* e = NewEdge(v1, v2);
+
+    Edge* x = b1;
+    bool isCCW = b1ccw;
+    while (true) {
+        if (isCCW) x->fccw = f2; else x->fcw = f2;
+        if (x == a2 && isCCW == a2ccw) break;
+        Vertex* fim = isCCW ? x->ve : x->vs;
+        x = isCCW ? x->nccw : x->ncw;
+        isCCW = (x->vs == fim);
+    }
+
+    e->fccw = f;  e->pccw = a1; e->nccw = b2;
+    e->fcw  = f2; e->pcw  = a2; e->ncw  = b1;
+    if (a1ccw) a1->nccw = e; else a1->ncw = e;
+    if (b2ccw) b2->pccw = e; else b2->pcw = e;
+    if (a2ccw) a2->nccw = e; else a2->ncw = e;
+    if (b1ccw) b1->pccw = e; else b1->pcw = e;
+
+    f->e = e;
+    f2->e = e;
+    return f2;
+}
+
+void BRep::KVFS(Vertex* v, Face* f) {
+    RemoveVertex(v);
+    RemoveFace(f);
+}
+
+void BRep::KEV(Edge* e, Vertex* v) {
+    Face* f = e->fccw;
+    Vertex* v1 = (e->vs == v) ? e->ve : e->vs;
+
+    if (e->pccw == e && e->nccw == e) {
+        v1->e = nullptr;
+        f->e = nullptr;
+    } else {
+        bool idaCcw = (e->ve == v);
+        Edge* a = idaCcw ? e->pccw : e->pcw;
+        bool accw = (a->ve == v1);
+        Edge* b = idaCcw ? e->ncw : e->nccw;
+        bool bccw = (b->vs == v1);
+
+        if (accw) a->nccw = b; else a->ncw = b;
+        if (bccw) b->pccw = a; else b->pcw = a;
+        if (v1->e == e) v1->e = b;
+        if (f->e  == e) f->e  = a;
+    }
+
+    RemoveVertex(v);
+    RemoveEdge(e);
+}
+
+void BRep::KEF(Edge* e) {
+    Face* f  = e->fccw;
+    Face* f2 = e->fcw;
+    Vertex* v1 = e->vs;
+    Vertex* v2 = e->ve;
+
+    Edge* a1 = e->pccw; bool a1ccw = (a1->ve == v1);
+    Edge* b2 = e->nccw; bool b2ccw = (b2->vs == v2);
+    Edge* a2 = e->pcw;  bool a2ccw = (a2->ve == v2);
+    Edge* b1 = e->ncw;  bool b1ccw = (b1->vs == v1);
+
+    Edge* x = b1;
+    bool isCCW = b1ccw;
+    while (x != e) {
+        if (isCCW) x->fccw = f; else x->fcw = f;
+        Vertex* fim = isCCW ? x->ve : x->vs;
+        x = isCCW ? x->nccw : x->ncw;
+        isCCW = (x->vs == fim);
+    }
+
+    if (a1ccw) a1->nccw = b1; else a1->ncw = b1;
+    if (b1ccw) b1->pccw = a1; else b1->pcw = a1;
+    if (a2ccw) a2->nccw = b2; else a2->ncw = b2;
+    if (b2ccw) b2->pccw = a2; else b2->pcw = a2;
+
+    if (v1->e == e) v1->e = b1;
+    if (v2->e == e) v2->e = b2;
+    f->e = a1;
+
+    RemoveFace(f2);
+    RemoveEdge(e);
 }

@@ -434,6 +434,11 @@ int main() {
 
     rayCastTexture.Initialize(200, 150);
 
+    BRep cube;
+    cube.CreateEulerSphere(8);
+
+    scene.addBRep(std::move(cube));
+
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
 
