@@ -35,6 +35,7 @@ std::vector<unsigned char> RayCast::Render(const std::vector<Object>& objects, c
 
     // Raios de debug
     std::vector<SMCInterval> intervalosDebug;
+    glm::vec3 currentColor = baseColor;
 
     if (useDebugRay) {
         for (const Object& obj : objects) {
@@ -81,9 +82,9 @@ std::vector<unsigned char> RayCast::Render(const std::vector<Object>& objects, c
 
             for (const Object& obj : objects) {
                 if (obj.type != ObjectType::CSG) continue;
+                currentColor = obj.color;
 
-                std::vector<RayIntersection> intersectionsInBoundingBox =
-                    SMC::IntersectRayInCell(ray, obj.octree.GetCell());
+                std::vector<RayIntersection> intersectionsInBoundingBox = SMC::IntersectRayInCell(ray, obj.octree.GetCell());
 
                 if (intersectionsInBoundingBox.empty()) continue;
 
@@ -142,9 +143,9 @@ std::vector<unsigned char> RayCast::Render(const std::vector<Object>& objects, c
             float diffuse = std::max(glm::dot(normal, lightDirection), 0.0f);
             float intensity = 0.15f + 0.85f * diffuse;
 
-            pixels[pixelIndex] = 255.0f * baseColor.r * intensity;
-            pixels[pixelIndex + 1] = 255.0f * baseColor.g * intensity;
-            pixels[pixelIndex + 2] = 255.0f * baseColor.b * intensity;
+            pixels[pixelIndex] = 255.0f * currentColor.r * intensity;
+            pixels[pixelIndex + 1] = 255.0f * currentColor.g * intensity;
+            pixels[pixelIndex + 2] = 255.0f * currentColor.b * intensity;
 
             // Sobreposição do raio de debug
             if (useDebugRay && rayIntersectsDebugRay) {

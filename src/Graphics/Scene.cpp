@@ -180,6 +180,7 @@ void Scene::RenderScene(Renderer& renderer, Shader& shader, Camera& camera, RayC
     } else {
         for (Object& o : objects) {
             if (!o.visible) continue;
+            shader.SetVec3("objectColor", o.color);
 
             if (o.type == ObjectType::Octree || o.type == ObjectType::CSG) {
                 if (state == SceneState::Static) {

@@ -21,7 +21,7 @@ public:
     BRep brep;
     std::vector<Triangle> mesh;
     bool visible = true;
-    glm::vec3 color;
+    glm::vec3 color = {0.0, 0.8, 1.0};
 
     Object();
 };
