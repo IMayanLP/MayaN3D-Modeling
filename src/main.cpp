@@ -435,7 +435,9 @@ int main() {
     rayCastTexture.Initialize(200, 150);
 
     BRep cube;
-    cube.CreateEulerSphere(8);
+    cube.CreateEulerSphere(128);
+    cube.Scale({2, 2, 2});
+    cube.Translate({1, 1, 0});
 
     scene.addBRep(std::move(cube));
 

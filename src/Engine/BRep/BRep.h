@@ -49,6 +49,8 @@ class BRep {
         // Primitivas
         void CreateEulerCube();
         void CreateEulerSphere(int);
+        void CreateEulerCylinder(int);
+        void CreateEulerCone(int);
 
         // Adjacencias
         std::vector<Edge*> GetEdgesOfFace(Face*);
@@ -56,6 +58,8 @@ class BRep {
         std::vector<Face*> GetFacesOfVertex(Vertex*);
         std::vector<Edge*> GetEdgesOfVertex(Vertex*);
         std::vector<Face*> GetAdjacentFaces(Face*);
+        std::vector<Edge*> GetAdjacentEdges(Edge*);
+        std::vector<Vertex*> GetAdjacentVertices(Vertex*);
 
         // EULER
         std::pair<Vertex*, Face*> MVFS(glm::vec3);
@@ -65,10 +69,24 @@ class BRep {
         void KEV(Edge*, Vertex*);
         void KEF(Edge*);
 
+        // Transformações
+        void Translate(glm::vec3);
+        void Scale(glm::vec3);
+        void Rotate(glm::vec3);
+
+        // Análises
+        static float CalculateSurfaceArea(std::vector<Triangle>&);
+        static float CalculateVolume(std::vector<Triangle>&);
+
+        float PI = 3.14159265f;
+
     private:
         std::vector<std::unique_ptr<Vertex>> vertices;
         std::vector<std::unique_ptr<Edge>> edges;
         std::vector<std::unique_ptr<Face>> faces;
+
+        glm::vec3 getSpherePoint(int, int, int, int, float);
+        glm::vec3 getCylinderPoint(int, int, float, float);
 
         Edge* FindEdge(Vertex*, Vertex*);
         Edge* FindEdgeLinear(Vertex*, Vertex*);
@@ -84,4 +102,6 @@ class BRep {
         int nextVertexId = 0;
         int nextEdgeId = 0;
         int nextFaceId = 0;
+
+        glm::vec3 translation = glm::vec3(0.0f, 0.0f, 0.0f);
 };

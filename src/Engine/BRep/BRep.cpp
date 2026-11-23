@@ -1,4 +1,5 @@
 ﻿#include <cmath>
+#include <glm/gtc/matrix_transform.hpp>
 #include "BRep.h"
 
 void BRep::Print() const {
@@ -417,13 +418,13 @@ std::vector<Triangle> BRep::TriangulateMesh() {
     std::vector<Triangle> mesh;
 
     for (std::unique_ptr<Face>& face : faces) {
-        std::vector<Vertex*> vs = GetVerticesOfFace(face.get());
-        int n = vs.size();
+        std::vector<Vertex*> vertices = GetVerticesOfFace(face.get());
+        int n = vertices.size();
         if (n < 3) continue;
 
-        glm::vec3 min = vs[0]->coords;
-        glm::vec3 max = vs[0]->coords;
-        for (Vertex* v : vs) {
+        glm::vec3 min = vertices[0]->coords;
+        glm::vec3 max = vertices[0]->coords;
+        for (Vertex* v : vertices) {
             min = glm::min(min, v->coords);
             max = glm::max(max, v->coords);
         }
@@ -439,16 +440,17 @@ std::vector<Triangle> BRep::TriangulateMesh() {
             b = 2;
         }
 
-        std::vector<glm::vec2> p(n);
-        for (int i = 0; i < n; i++) p[i] = { vs[i]->coords[a], vs[i]->coords[b] };
+        // adicional Ear Cliping (se nao as faces ficam tudo bugadas)
+        std::vector<glm::vec2> projectedVertices(n);
+        for (int i = 0; i < n; i++) projectedVertices[i] = { vertices[i]->coords[a], vertices[i]->coords[b] };
 
         std::vector<int> idx(n);
         for (int i = 0; i < n; i++) idx[i] = i;
 
         float area = 0.0f;
         for (int i = 0; i < n; i++) {
-            glm::vec2 p0 = p[i];
-            glm::vec2 p1 = p[(i + 1) % n];
+            glm::vec2 p0 = projectedVertices[i];
+            glm::vec2 p1 = projectedVertices[(i + 1) % n];
             area += p0.x * p1.y - p1.x * p0.y;
         }
 
@@ -464,28 +466,31 @@ std::vector<Triangle> BRep::TriangulateMesh() {
                 int ib = idx[i];
                 int ic = idx[(i + 1) % m];
 
-                if (ProdVetorial2D(p[ia], p[ib], p[ic]) <= 0) continue;
+                if (ProdVetorial2D(projectedVertices[ia], projectedVertices[ib], projectedVertices[ic]) <= 0) continue;
 
                 bool vazia = true;
                 for (int j : idx) {
                     if (j == ia || j == ib || j == ic) continue;
-                    if (isInside(p[j], p[ia], p[ib], p[ic])) { vazia = false; break; }
+                    if (isInside(projectedVertices[j], projectedVertices[ia], projectedVertices[ib], projectedVertices[ic])) {
+                        vazia = false;
+                        break;
+                    }
                 }
                 if (!vazia) continue;
 
-                newTriangle(mesh, vs, isInverted, ia, ib, ic);
+                newTriangle(mesh, vertices, isInverted, ia, ib, ic);
                 idx.erase(idx.begin() + i);
                 cortou = true;
                 break;
             }
 
             if (!cortou) {
-                newTriangle(mesh, vs, isInverted, idx[m - 1], idx[0], idx[1]);
+                newTriangle(mesh, vertices, isInverted, idx[m - 1], idx[0], idx[1]);
                 idx.erase(idx.begin());
             }
         }
         
-        newTriangle(mesh, vs, isInverted, idx[0], idx[1], idx[2]);
+        newTriangle(mesh, vertices, isInverted, idx[0], idx[1], idx[2]);
     }
     return mesh;
 }
@@ -513,40 +518,78 @@ void BRep::CreateEulerCube() {
     Face* s4 = MEF(f, v7, v4);
 }
 
-glm::vec3 getSpherePoint(int j, int i, int camadas, int fatias, float radius) {
-    const float PI = 3.14159265f;
+glm::vec3 BRep::getSpherePoint(int j, int i, int camadas, int res, float radius) {
     float phi = PI * j / camadas;
-    float theta = 2.0f * PI * i / fatias;
+    float theta = 2.0f * PI * i / res;
 
     float r = radius * std::sin(phi);
     return {r * std::cos(theta), -radius * std::cos(phi), -r * std::sin(theta)};
 }
 
 void BRep::CreateEulerSphere(int res) {
-    int fatias  = res;
     int camadas = res / 2;
     float radius = 0.5f;
 
-    std::vector<Vertex*> anel(fatias);
+    std::vector<Vertex*> midRing(res);
 
-    auto [v0, f] = MVFS(getSpherePoint(1, 0, camadas, fatias, radius));
-    anel[0] = v0;
+    auto [v0, f] = MVFS(getSpherePoint(1, 0, camadas, res, radius));
+    midRing[0] = v0;
 
-    for (int i = 1; i < fatias; i++) anel[i] = MEV(f, anel[i - 1], getSpherePoint(1, i, camadas, fatias, radius));
-    Face* bottomFace = MEF(f, anel[fatias - 1], anel[0]);
-    std::vector<Vertex*> base = anel;
+    for (int i = 1; i < res; i++) midRing[i] = MEV(f, midRing[i - 1], getSpherePoint(1, i, camadas, res, radius));
+    Face* bottomFace = MEF(f, midRing[res - 1], midRing[0]);
+    std::vector<Vertex*> base = midRing;
 
     for (int j = 2; j < camadas; j++) {
-        std::vector<Vertex*> anterior = anel;
-        for (int i = 0; i < fatias; i++) anel[i] = MEV(f, anterior[i], getSpherePoint(j, i, camadas, fatias, radius));
-        for (int i = 0; i < fatias; i++) MEF(f, anel[i], anel[(i + 1) % fatias]);
+        std::vector<Vertex*> midRingBkp = midRing;
+        for (int i = 0; i < res; i++) midRing[i] = MEV(f, midRingBkp[i], getSpherePoint(j, i, camadas, res, radius));
+        for (int i = 0; i < res; i++) MEF(f, midRing[i], midRing[(i + 1) % res]);
     }
 
-    Vertex* top = MEV(f, anel[0], {0.0f, radius, 0.0f});
-    for (int i = 1; i < fatias; i++) MEF(f, top, anel[i]);
+    Vertex* top = MEV(f, midRing[0], {0.0f, radius, 0.0f});
+    for (int i = 1; i < res; i++) MEF(f, top, midRing[i]);
 
     Vertex* bottom = MEV(bottomFace, base[0], {0.0f, -radius, 0.0f});
-    for (int i = fatias - 1; i >= 1; i--) MEF(bottomFace, bottom, base[i]);
+    for (int i = res - 1; i >= 1; i--) MEF(bottomFace, bottom, base[i]);
+}
+
+glm::vec3 BRep::getCylinderPoint(int i, int res, float radius, float y) {
+    float theta = 2.0f * PI * i / res;
+    return {radius * std::cos(theta), y, -radius * std::sin(theta)};
+}
+
+void BRep::CreateEulerCylinder(int res) {
+    float radius = 0.5f;
+    float height = 1.0f;
+    float bot = -height / 2.0f;
+    float top =  height / 2.0f;
+
+    std::vector<Vertex*> base(res);
+    std::vector<Vertex*> topo(res);
+
+    auto [v0, f] = MVFS(getCylinderPoint(0, res, radius, bot));
+    base[0] = v0;
+    for (int i = 1; i < res; i++) base[i] = MEV(f, base[i - 1], getCylinderPoint(i, res, radius, bot));
+    Face* bottomFace = MEF(f, base[res - 1], base[0]);
+
+    for (int i = 0; i < res; i++) topo[i] = MEV(f, base[i], getCylinderPoint(i, res, radius, top));
+    for (int i = 0; i < res; i++) MEF(f, topo[i], topo[(i + 1) % res]);
+}
+
+void BRep::CreateEulerCone(int res) {
+    float radius = 0.5f;
+    float height = 1.0f;
+    float bot = -height / 2.0f;
+    float top =  height / 2.0f;
+
+    std::vector<Vertex*> base(res);
+
+    auto [v0, f] = MVFS(getCylinderPoint(0, res, radius, bot));
+    base[0] = v0;
+    for (int i = 1; i < res; i++) base[i] = MEV(f, base[i - 1], getCylinderPoint(i, res, radius, bot));
+    Face* bottomFace = MEF(f, base[res - 1], base[0]);
+
+    Vertex* topVertex = MEV(f, base[0], {0.0f, top, 0.0f});
+    for (int i = 1; i < res; i++) MEF(f, topVertex, base[i]);
 }
 
 
@@ -603,7 +646,7 @@ std::vector<Edge*> BRep::GetEdgesOfFace(Face* f) {
 
 std::vector<Vertex*> BRep::GetVerticesOfFace(Face* f) {
     std::vector<Vertex*> result;
-    if (!f->e) return result;
+    if (f == nullptr || f->e == nullptr) return result;
 
     Edge* e = f->e;
     Edge* start = e;
@@ -694,6 +737,28 @@ std::vector<Face*> BRep::GetAdjacentFaces(Face* f) {
     return result;
 }
 
+std::vector<Edge*> BRep::GetAdjacentEdges(Edge* e) {
+    std::vector<Edge*> result;
+    if (e == nullptr) return result;
+
+    for (Vertex* v : { e->vs, e->ve }) {
+        for (Edge* x : GetEdgesOfVertex(v)) {
+            if (x != e && std::find(result.begin(), result.end(), x) == result.end()) result.push_back(x);
+        }
+    }
+    return result;
+}
+
+std::vector<Vertex*> BRep::GetAdjacentVertices(Vertex* v) {
+    std::vector<Vertex*> result;
+    if (v == nullptr) return result;
+
+    for (Edge* e : GetEdgesOfVertex(v)) {
+        Vertex* v2 = (e->vs == v) ? e->ve : e->vs;
+        if (v2 != nullptr && std::find(result.begin(), result.end(), v2) == result.end()) result.push_back(v2);
+    }
+    return result;
+}
 
 
 
@@ -895,4 +960,57 @@ void BRep::KEF(Edge* e) {
 
     RemoveFace(f2);
     RemoveEdge(e);
+}
+
+
+
+
+
+// Transformações
+void BRep::Translate(glm::vec3 value) {
+    for (std::unique_ptr<Vertex>& v : vertices) v->coords += value;
+    translation += value;
+}
+
+void BRep::Scale(glm::vec3 value) {
+    for (std::unique_ptr<Vertex>& v : vertices) v->coords = translation + (v->coords - translation) * value;
+}
+
+void BRep::Rotate(glm::vec3 value) {
+    glm::mat4 rotation(1.0f);
+    rotation = glm::rotate(rotation, glm::radians(value.z), glm::vec3(0, 0, 1));
+    rotation = glm::rotate(rotation, glm::radians(value.y), glm::vec3(0, 1, 0));
+    rotation = glm::rotate(rotation, glm::radians(value.x), glm::vec3(1, 0, 0));
+    glm::mat3 rotation3x3(rotation);
+
+    for (std::unique_ptr<Vertex>& v : vertices) v->coords = translation + rotation3x3 * (v->coords - translation);
+}
+
+
+
+
+
+// Analises
+float BRep::CalculateSurfaceArea(std::vector<Triangle>& mesh) {
+    float area = 0.0f;
+
+    for (const Triangle& t : mesh) {
+        glm::vec3 u = t.v1 - t.v0;
+        glm::vec3 v = t.v2 - t.v0;
+
+        area += glm::length(glm::cross(u, v)) * 0.5f;
+    }
+
+    return area;
+}
+
+// lembrar: https://algorithms.alexli.ca/polyhedron-volume
+float BRep::CalculateVolume(std::vector<Triangle>& mesh) {
+    float volume = 0.0f;
+
+    for (const Triangle& t : mesh) {
+        volume += glm::dot(t.v0, glm::cross(t.v1, t.v2)) / 6.0f;
+    }
+
+    return std::abs(volume);
 }
