@@ -9,6 +9,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "Octree.h"
+#include "../BRep/BRep.h"
 #include "../Graphics/Camera.h"
 
 extern ImGuiWindowFlags flags;
@@ -30,7 +31,14 @@ enum class ToolType {
     Camera,
     Import,
     Export,
-    Render
+    Render,
+    MVFS,
+    MEV,
+    MEF,
+    KVFS,
+    KEV,
+    KEF,
+    SelectVertex
 };
 
 enum class Axys {
@@ -47,7 +55,7 @@ enum class ObjectToolCollection {
 
 class Interface {
     public:
-        void Render(float, const std::vector<std::string>&);
+        void Render(float, const std::vector<std::string>&, std::vector<Vertex*>);
 
         // callbacks
         // octree
@@ -76,7 +84,24 @@ class Interface {
         std::function<void(glm::vec3)> OnScaleCSGObject;
         std::function<void(glm::vec3)> OnRotateCSGObject;
 
-        //
+        // BREP
+        std::function<void(std::string)> OnCreateBREPCube;
+        std::function<void(std::string, int)> OnCreateBREPSphere;
+        std::function<void(std::string, int)> OnCreateBREPCylinder;
+        std::function<void(std::string, int)> OnCreateBREPCone;
+
+        std::function<void(glm::vec3)> OnMoveBREPObject;
+        std::function<void(glm::vec3)> OnScaleBREPObject;
+        std::function<void(glm::vec3)> OnRotateBREPObject;
+
+        std::function<void(std::string, glm::vec3)> OnMVFS;
+        std::function<void(glm::vec3)> OnMEV;
+        std::function<void()> OnMEF;
+        std::function<void()> OnKVFS;
+        std::function<void()> OnKEV;
+        std::function<void()> OnKEF;
+
+        // Gerais
         std::function<void(int)> OnSelectObject;
         std::function<void(int)> OnSelectSecondObject;
 
@@ -106,12 +131,15 @@ class Interface {
         void ResetTransformValues();
 
         void DrawCameraGizmo(const Camera&, int, int);
+
+        ToolType getSelectedTool();
+        void resetSelectedTool();
     private:
         void RenderCollectionToolsSection();
 
         void RenderToolsSection();
         void RenderObjectListSection(const std::vector<std::string>&);
-        void RenderDetailsSection(const std::vector<std::string>&);
+        void RenderDetailsSection(const std::vector<std::string>&, std::vector<Vertex*>);
 
         ObjectToolCollection selectCollection = ObjectToolCollection::Octree;
         ToolType selectedTool = ToolType::None;
@@ -130,6 +158,7 @@ class Interface {
         Axys selectedAxys = Axys::X;
         bool useGlobalTransform = false;
         glm::vec3 csgTransformValues = {0.0f, 0.0f, 0.0f};
+        glm::vec3 brepTransformValues = {0.0f, 0.0f, 0.0f};
         // defaults
         float defaultScale = 1.0f;
         float defaultTranslation = 0.0f;
@@ -148,6 +177,11 @@ class Interface {
         float defaultRotationX = 0.0f;
         float defaultRotationY = 0.0f;
         float defaultRotationZ = 0.0f;
+
+        // Resolucao das primitivas BRep
+        int brepResolution = 32;
+        // default
+        int defaultBrepResolution = 32;
 
         // esfera
         float sphereRadius = 1.0f;

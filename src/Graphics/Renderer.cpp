@@ -231,3 +231,85 @@ void Renderer::DrawMesh(const std::vector<Triangle>& mesh, Shader& shader, float
 
     glBindVertexArray(0);
 }
+
+void Renderer::DrawBrepWireFrame(const std::vector<std::unique_ptr<Edge>>& edges, Shader& shader) {
+    if (edges.empty()) return;
+
+    std::vector<float> vertices;
+    vertices.reserve(edges.size() * 6);
+
+    for (const std::unique_ptr<Edge>& edge : edges) {
+        if (edge == nullptr || edge->vs == nullptr || edge->ve == nullptr) continue;
+
+        vertices.insert(vertices.end(), {
+            edge->vs->coords.x, edge->vs->coords.y, edge->vs->coords.z,
+            edge->ve->coords.x, edge->ve->coords.y, edge->ve->coords.z
+        });
+    }
+
+    if (vertices.empty()) return;
+
+    shader.Use();
+
+    glBindVertexArray(wireframeVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, wireframeVBO);
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_DYNAMIC_DRAW);
+
+    glLineWidth(2.0f);
+    glDrawArrays(GL_LINES, 0, static_cast<GLsizei>(vertices.size() / 3));
+    glLineWidth(1.0f);
+
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_DYNAMIC_DRAW);
+    glPointSize(6.0f);
+    glDrawArrays(GL_POINTS, 0, static_cast<GLsizei>(vertices.size() / 3));
+
+    glLineWidth(1.0f);
+    glPointSize(1.0f);
+
+    glBindVertexArray(0);
+}
+
+void Renderer::DrawBrepVertices(const std::vector<std::unique_ptr<Vertex>>& vertices, Shader& shader) {
+    if (vertices.empty()) return;
+
+    std::vector<float> verticesToRender;
+    verticesToRender.reserve(vertices.size() * 3);
+
+    for (const std::unique_ptr<Vertex>& v : vertices) {
+        verticesToRender.insert(verticesToRender.end(), {
+            v->coords.x, v->coords.y, v->coords.z
+        });
+    }
+
+    if (verticesToRender.empty()) return;
+
+    shader.Use();
+
+    glBindVertexArray(wireframeVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, wireframeVBO);
+    glBufferData(GL_ARRAY_BUFFER, verticesToRender.size() * sizeof(float), verticesToRender.data(), GL_DYNAMIC_DRAW);
+    glPointSize(6.0f);
+    glDrawArrays(GL_POINTS, 0, static_cast<GLsizei>(verticesToRender.size() / 3));
+
+    glPointSize(1.0f);
+
+    glBindVertexArray(0);
+}
+
+void Renderer::DrawVertex(const Vertex* v, Shader& shader) {
+    if (v == nullptr) return;
+
+    float vertex[] = {v->coords.x, v->coords.y, v->coords.z};
+
+    shader.Use();
+
+    glBindVertexArray(wireframeVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, wireframeVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertex), vertex, GL_DYNAMIC_DRAW);
+
+    glPointSize(10.0f);
+    glDrawArrays(GL_POINTS, 0, 1);
+    glPointSize(1.0f);
+
+    glBindVertexArray(0);
+}

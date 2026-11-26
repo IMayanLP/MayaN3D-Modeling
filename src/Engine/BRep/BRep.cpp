@@ -422,6 +422,18 @@ std::vector<Triangle> BRep::TriangulateMesh() {
         int n = vertices.size();
         if (n < 3) continue;
 
+        bool repeatVertex = false;
+        for (int i = 0; i < n && !repeatVertex; i++) {
+            for (int j = i + 1; j < n; j++) {
+                if (vertices[i] == vertices[j]) {
+                    repeatVertex = true;
+                    break;
+                }
+            }
+        }
+
+        if (repeatVertex) continue;
+
         glm::vec3 min = vertices[0]->coords;
         glm::vec3 max = vertices[0]->coords;
         for (Vertex* v : vertices) {
@@ -440,7 +452,7 @@ std::vector<Triangle> BRep::TriangulateMesh() {
             b = 2;
         }
 
-        // adicional Ear Cliping (se nao as faces ficam tudo bugadas)
+        // adicional Ear Cliping (se nao as faces podem ficar tudo bugadas)
         std::vector<glm::vec2> projectedVertices(n);
         for (int i = 0; i < n; i++) projectedVertices[i] = { vertices[i]->coords[a], vertices[i]->coords[b] };
 
@@ -973,6 +985,7 @@ void BRep::Translate(glm::vec3 value) {
 }
 
 void BRep::Scale(glm::vec3 value) {
+    if (value.x == 0.0f || value.y == 0.0f || value.z == 0.0f) return;
     for (std::unique_ptr<Vertex>& v : vertices) v->coords = translation + (v->coords - translation) * value;
 }
 
@@ -1013,4 +1026,98 @@ float BRep::CalculateVolume(std::vector<Triangle>& mesh) {
     }
 
     return std::abs(volume);
+}
+
+
+
+
+
+// Render e Modeling Description Tools
+const std::vector<std::unique_ptr<Edge>>& BRep::GetEdges() const {
+    return edges;
+}
+
+const std::vector<std::unique_ptr<Vertex>>& BRep::GetVertices() const {
+    return vertices;
+}
+
+void BRep::setLabel(std::string name) {
+    label = name;
+}
+std::string BRep::getLabel() const {
+    return label;
+}
+
+const size_t BRep::GetEdgesSize() const {
+    return edges.size();
+};
+
+const size_t BRep::GetVerticesSize() const {
+    return vertices.size();
+};
+
+const size_t BRep::GetFacesSize() const {
+    return faces.size();
+};
+
+Face* BRep::AutoFaceMEV(Vertex* v1, glm::vec3 p) {
+    if (v1->e == nullptr) return faces.empty() ? nullptr : faces[0].get();
+
+    std::vector<Face*> fs = GetFacesOfVertex(v1);
+    if (fs.empty()) return nullptr;
+    if (fs.size() == 1) return fs[0];
+
+    Face* best = nullptr;
+    float minDist = 1e30f;
+
+    for (Face* f : fs) {
+        std::vector<Vertex*> vs = GetVerticesOfFace(f);
+        if (vs.size() < 3) continue;
+
+        glm::vec3 n = glm::cross(vs[1]->coords - vs[0]->coords, vs[2]->coords - vs[0]->coords);
+        if (glm::length(n) < 1e-12f) continue;
+        n = glm::normalize(n);
+
+        float d = std::abs(glm::dot(p - v1->coords, n));
+        if (d < minDist) { minDist = d; best = f; }
+    }
+    return best ? best : fs[0];
+}
+
+Face* BRep::AutoFaceMEF(Vertex* a, Vertex* b) {
+    if (a == nullptr || b == nullptr || a == b) return nullptr;
+    if (a->e == nullptr || b->e == nullptr) return nullptr;
+    if (faces.size() == 1) return faces[0].get();
+
+    std::vector<Face*> fb = GetFacesOfVertex(b);
+    for (Face* f : GetFacesOfVertex(a))
+        if (std::find(fb.begin(), fb.end(), f) != fb.end()) return f;
+    return nullptr;
+}
+
+Vertex* BRep::SelectVertex(Ray ray) {
+    Vertex* selected = nullptr;
+    float minDistanceSquared = 1.0f;
+
+    glm::vec3 origin = ray.GetOrigin();
+    glm::vec3 direction = ray.GetDirection();
+
+    for (const std::unique_ptr<Vertex>& vertex : vertices) {
+        glm::vec3 diff = vertex->coords - origin;
+
+        float t = glm::dot(diff, direction) / glm::dot(direction, direction);
+        if (t < 0.0f) continue;
+
+        glm::vec3 closestPoint = origin + direction * t;
+        float distanceSquared = glm::dot(vertex->coords - closestPoint, vertex->coords - closestPoint);
+
+        if (distanceSquared < minDistanceSquared) {
+            minDistanceSquared = distanceSquared;
+            selected = vertex.get();
+        }
+    }
+
+    if (selected != nullptr) std::cout << "Vertice encontrado: " << selected->id << std::endl;
+
+    return selected;
 }

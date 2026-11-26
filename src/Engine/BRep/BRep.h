@@ -6,6 +6,7 @@
 #include <iostream>
 
 #include "../Primitives/Triangle.h"
+#include "../Ray/Ray.h"
 
 struct Vertex;
 struct Edge;
@@ -53,6 +54,9 @@ class BRep {
         void CreateEulerCone(int);
 
         // Adjacencias
+        Edge* FindEdge(Vertex*, Vertex*);
+        Edge* FindEdgeLinear(Vertex*, Vertex*);
+
         std::vector<Edge*> GetEdgesOfFace(Face*);
         std::vector<Vertex*> GetVerticesOfFace(Face*);
         std::vector<Face*> GetFacesOfVertex(Vertex*);
@@ -78,18 +82,32 @@ class BRep {
         static float CalculateSurfaceArea(std::vector<Triangle>&);
         static float CalculateVolume(std::vector<Triangle>&);
 
+        // Demais
+        const std::vector<std::unique_ptr<Edge>>& GetEdges() const;
+        const std::vector<std::unique_ptr<Vertex>>& GetVertices() const;
+
+        const size_t GetEdgesSize() const;
+        const size_t GetVerticesSize() const;
+        const size_t GetFacesSize() const;
+
+        Vertex* SelectVertex(Ray);
+        Face* AutoFaceMEV(Vertex*, glm::vec3);
+        Face* AutoFaceMEF(Vertex*, Vertex*);
+
+        void setLabel(std::string);
+        std::string getLabel() const;
+
         float PI = 3.14159265f;
 
     private:
+        std::string label = "";
+
         std::vector<std::unique_ptr<Vertex>> vertices;
         std::vector<std::unique_ptr<Edge>> edges;
         std::vector<std::unique_ptr<Face>> faces;
 
         glm::vec3 getSpherePoint(int, int, int, int, float);
         glm::vec3 getCylinderPoint(int, int, float, float);
-
-        Edge* FindEdge(Vertex*, Vertex*);
-        Edge* FindEdgeLinear(Vertex*, Vertex*);
 
         Vertex* NewVertex(glm::vec3);
         Edge* NewEdge(Vertex*, Vertex*);

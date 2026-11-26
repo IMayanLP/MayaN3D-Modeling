@@ -122,6 +122,15 @@ int main() {
         scene.addCSG(std::move(newCSG));
     };
 
+    UI.OnCreateBREPSphere = [&scene](std::string label, int res) {
+        BRep newBrep;
+        if (label.empty()) label = "(Esfera) Object " + std::to_string(scene.getObjectsSize());
+        newBrep.CreateEulerSphere(res);
+        newBrep.setLabel(label);
+
+        scene.addBRep(std::move(newBrep));
+    };
+
     UI.OnCreateCube = [&scene](std::string label, float sizeX, float sizeY, float sizeZ, int maxLevel, float rotationX, float rotationY, float rotationZ) {
         Octree newOctree;
         Cube cube(sizeX, sizeY, sizeZ);
@@ -143,6 +152,15 @@ int main() {
         newCSG.setLabel(label);
 
         scene.addCSG(std::move(newCSG));
+    };
+
+    UI.OnCreateBREPCube = [&scene](std::string label) {
+        BRep newBrep;
+        if (label.empty()) label = "(Bloco) Object " + std::to_string(scene.getObjectsSize());
+        newBrep.CreateEulerCube();
+        newBrep.setLabel(label);
+
+        scene.addBRep(std::move(newBrep));
     };
 
     UI.OnCreateCylinder = [&scene](std::string label, float radius, float height, int maxLevel, float rotationX, float rotationY, float rotationZ) {
@@ -168,6 +186,15 @@ int main() {
         scene.addCSG(std::move(newCSG));
     };
 
+    UI.OnCreateBREPCylinder = [&scene](std::string label, int res) {
+        BRep newBrep;
+        if (label.empty()) label = "(Cilindro) Object " + std::to_string(scene.getObjectsSize());
+        newBrep.CreateEulerCylinder(res);
+        newBrep.setLabel(label);
+
+        scene.addBRep(std::move(newBrep));
+    };
+
     UI.OnCreateCone = [&scene](std::string label, float radius, float height, int maxLevel, float rotationX, float rotationY, float rotationZ) {
         Octree newOctree;
         Cone cone(radius, height);
@@ -189,6 +216,15 @@ int main() {
         newCSG.setLabel(label);
 
         scene.addCSG(std::move(newCSG));
+    };
+
+    UI.OnCreateBREPCone = [&scene](std::string label, int res) {
+        BRep newBrep;
+        if (label.empty()) label = "(Cone) Object " + std::to_string(scene.getObjectsSize());
+        newBrep.CreateEulerCone(res);
+        newBrep.setLabel(label);
+
+        scene.addBRep(std::move(newBrep));
     };
 
     UI.OnMoveObject = [&scene](Axys axis, float value, bool useGlobalTransform) {
@@ -216,6 +252,13 @@ int main() {
         }
     };
 
+    UI.OnMoveBREPObject = [&scene](glm::vec3 t) {
+        if (scene.getSelectedObjectType() == ObjectType::BRep) {
+            scene.getSelectedBRep().Translate(t);
+            scene.getSelectedObject().mesh = scene.getSelectedBRep().TriangulateMesh();
+        }
+    };
+
     UI.OnScaleObject = [&scene](float scale, bool useGlobalTransform) {
         if (scene.getSelectedObjectType() == ObjectType::Octree) {
             if (!useGlobalTransform) scale = scene.getSelectedOctree().GetScale() * scale;
@@ -235,6 +278,13 @@ int main() {
         }
     };
 
+    UI.OnScaleBREPObject = [&scene](glm::vec3 t) {
+        if (scene.getSelectedObjectType() == ObjectType::BRep) {
+            scene.getSelectedBRep().Scale(t);
+            scene.getSelectedObject().mesh = scene.getSelectedBRep().TriangulateMesh();
+        }
+    };
+
     UI.OnRotateCSGObject = [&scene](glm::vec3 t) {
         if (scene.getSelectedObjectType() == ObjectType::CSG) {
             std::unique_ptr<CSGNode> root = scene.getSelectedCSG().GetAndFreeRoot();
@@ -246,11 +296,20 @@ int main() {
         }
     };
 
+    UI.OnRotateBREPObject = [&scene](glm::vec3 t) {
+        if (scene.getSelectedObjectType() == ObjectType::BRep) {
+            scene.getSelectedBRep().Rotate(t);
+            scene.getSelectedObject().mesh = scene.getSelectedBRep().TriangulateMesh();
+        }
+    };
+
     UI.OnCalculateVolume = [&scene]() -> float {
+        if (scene.getSelectedObjectType() == ObjectType::BRep) return BRep::CalculateVolume(scene.getSelectedObject().mesh);
         return scene.getSelectedOctree().getVolume();
     };
 
     UI.OnCalculateArea = [&scene]() -> float {
+        if (scene.getSelectedObjectType() == ObjectType::BRep) return BRep::CalculateSurfaceArea(scene.getSelectedObject().mesh);
         return scene.getSelectedOctree().getSurfaceArea();
     };
 
@@ -426,6 +485,76 @@ int main() {
         scene.toggleRenderType();
     };
 
+    UI.OnMVFS = [&scene](std::string label, glm::vec3 values) {
+        BRep newBrep;
+        auto [v0, f] = newBrep.MVFS(values);
+        if (label.empty()) label = "Object " + std::to_string(scene.getObjectsSize());
+        newBrep.setLabel(label);
+
+        scene.addBRep(std::move(newBrep));
+    };
+
+    UI.OnKVFS = [&scene]() {
+        std::vector<Vertex*> v = scene.getSelectedVertices();
+        if (v[0] != nullptr) {
+            BRep& selectedBrep = scene.getSelectedBRep();
+            Face* f = selectedBrep.AutoFaceMEV(v[0], {v[0]->coords.x, v[0]->coords.y, v[0]->coords.z});
+
+            scene.removeSelectedObject();
+            scene.resetSelectedIndex();
+            scene.resetSecondSelectedIndex();
+
+            selectedBrep.KVFS(v[0], f);
+            scene.resetSelectedVertex();
+        }
+    };
+
+    UI.OnMEV = [&scene](glm::vec3 values) {
+        std::vector<Vertex*> v = scene.getSelectedVertices();
+        if (v[0] != nullptr) {
+            BRep& selectedBrep = scene.getSelectedBRep();
+
+            selectedBrep.MEV(selectedBrep.AutoFaceMEV(v[0], values), v[0], values);
+            scene.getSelectedObject().mesh = scene.getSelectedBRep().TriangulateMesh();
+            scene.resetSelectedVertex();
+        }
+    };
+
+    UI.OnKEV = [&scene]() {
+        std::vector<Vertex*> v = scene.getSelectedVertices();
+        if (v[0] != nullptr) {
+            BRep& selectedBrep = scene.getSelectedBRep();
+
+            selectedBrep.KEV(v[0]->e, v[0]);
+            scene.getSelectedObject().mesh = scene.getSelectedBRep().TriangulateMesh();
+            scene.resetSelectedVertex();
+        }
+    };
+
+    UI.OnMEF = [&scene]() {
+        std::vector<Vertex*> v = scene.getSelectedVertices();
+        if (v[0] != nullptr && v[1] != nullptr) {
+            BRep& selectedBrep = scene.getSelectedBRep();
+            Face* f = selectedBrep.AutoFaceMEF(v[0], v[1]);
+
+            selectedBrep.MEF(f, v[0], v[1]);
+            scene.getSelectedObject().mesh = scene.getSelectedBRep().TriangulateMesh();
+            scene.resetSelectedVertex();
+        }
+    };
+
+    UI.OnKEF = [&scene]() {
+        std::vector<Vertex*> v = scene.getSelectedVertices();
+        if (v[0] != nullptr && v[1] != nullptr) {
+            BRep& selectedBrep = scene.getSelectedBRep();
+            Edge* e = selectedBrep.FindEdge(v[0], v[1]);
+
+            selectedBrep.KEF(e);
+            scene.getSelectedObject().mesh = scene.getSelectedBRep().TriangulateMesh();
+            scene.resetSelectedVertex();
+        }
+    };
+
     float deltaTime = 0.0f;
     float lastFrame = 0.0f;
 
@@ -434,12 +563,11 @@ int main() {
 
     rayCastTexture.Initialize(200, 150);
 
-    BRep cube;
-    cube.CreateEulerSphere(128);
-    cube.Scale({2, 2, 2});
-    cube.Translate({1, 1, 0});
+    BRep defaultCube;
+    defaultCube.CreateEulerCube();
 
-    scene.addBRep(std::move(cube));
+    defaultCube.setLabel("default cube");
+    scene.addBRep(std::move(defaultCube));
 
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
@@ -478,6 +606,38 @@ int main() {
             ImGui::ResetMouseDragDelta(ImGuiMouseButton_Left);
             isMoving = true;
         }
+
+        if (UI.getSelectedTool() == ToolType::SelectVertex && (ImGui::IsMouseClicked(ImGuiMouseButton_Left) || ImGui::IsMouseClicked(ImGuiMouseButton_Right))) {
+            if (scene.hasAnObjectSelected()) {
+                double mouseX, mouseY;
+                glfwGetCursorPos(window, &mouseX, &mouseY);
+
+                float posX = static_cast<float>(mouseX - navBarSize);
+                float posY = static_cast<float>(mouseY);
+
+                float ndcX = (2.0f * posX) / viewportWidth - 1.0f;
+                float ndcY = 1.0f - (2.0f * posY) / viewportHeight;
+
+                glm::mat4 inverseView = glm::inverse(camera.GetViewMatrix());
+
+                glm::vec3 cameraPosition = camera.GetPosition();
+                glm::vec3 forward = glm::normalize(glm::vec3(inverseView * glm::vec4(0.0f, 0.0f, -1.0f, 0.0f)));
+                glm::vec3 right = glm::normalize(glm::vec3(inverseView * glm::vec4(1.0f, 0.0f, 0.0f, 0.0f)));
+                glm::vec3 up = glm::normalize(glm::vec3(inverseView * glm::vec4(0.0f, 1.0f, 0.0f, 0.0f)));
+
+                float aspectRatio = static_cast<float>(viewportWidth) / static_cast<float>(viewportHeight);
+                const float scale = 0.41421356f;
+
+                glm::vec3 direction = glm::normalize(forward + right * (ndcX * aspectRatio * scale) + up * (ndcY * scale));
+
+                Ray ray(cameraPosition, direction);
+
+                if (ImGui::IsMouseClicked(ImGuiMouseButton_Left)) scene.setSelectedVertex(scene.getSelectedBRep().SelectVertex(ray), 0);
+                else if (ImGui::IsMouseClicked(ImGuiMouseButton_Right)) scene.setSelectedVertex(scene.getSelectedBRep().SelectVertex(ray), 1);
+                UI.resetSelectedTool();
+            }
+        }
+
 
         float speed = 5.0f * deltaTime;
 
@@ -543,7 +703,7 @@ int main() {
 
         UI.DrawCameraGizmo(camera, navBarSize, viewportWidth);
 
-        UI.Render(navBarSize, scene.getObjectNames());
+        UI.Render(navBarSize, scene.getObjectNames(), scene.getSelectedVertices());
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 

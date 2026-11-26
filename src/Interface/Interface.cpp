@@ -53,15 +53,23 @@ void Interface::ResetInputs() {
     debugRayDirection = {0.0f, 0.0f, 0.0f};
     useDebugRay = false;
 
+    brepResolution = defaultBrepResolution;
+
     ResetTransformValues();
 }
 
 void Interface::ResetTransformValues() {
-    if (selectedTool == ToolType::Scale) csgTransformValues = {1.0f, 1.0f, 1.0f};
-    else csgTransformValues = {0.0f, 0.0f, 0.0f};
+    if (selectedTool == ToolType::Scale) {
+        csgTransformValues = {1.0f, 1.0f, 1.0f};
+        brepTransformValues = {1.0f, 1.0f, 1.0f};
+    }
+    else {
+        csgTransformValues = {0.0f, 0.0f, 0.0f};
+        brepTransformValues = {0.0f, 0.0f, 0.0f};
+    }
 }
 
-void Interface::Render(float navBarSize, const std::vector<std::string>& objectNames) {
+void Interface::Render(float navBarSize, const std::vector<std::string>& objectNames, std::vector<Vertex*> selectedVertices) {
     ImGuiViewport* mainViewport = ImGui::GetMainViewport();
 
     ImGui::SetNextWindowPos(mainViewport->WorkPos);
@@ -87,7 +95,7 @@ void Interface::Render(float navBarSize, const std::vector<std::string>& objectN
     ImGui::Separator();
     RenderObjectListSection(objectNames);
     ImGui::Separator();
-    RenderDetailsSection(objectNames);
+    RenderDetailsSection(objectNames, selectedVertices);
 
     ImGui::EndChild();
     ImGui::PopStyleColor();
@@ -184,7 +192,48 @@ void Interface::RenderToolsSection() {
         ImGui::SameLine();
         if (ImGui::Button("RayCast", buttonSize) && OnToggleRenderType) OnToggleRenderType();
     } else if (selectCollection == ObjectToolCollection::BREP) {
-        ImGui::Text("Em breve");
+        if (ImGui::Button("MVFS", buttonSize)) selectedTool = ToolType::MVFS;
+        ImGui::SameLine();
+        if (ImGui::Button("MEV", buttonSize)) selectedTool = ToolType::MEV;
+        ImGui::SameLine();
+        if (ImGui::Button("MEF", buttonSize)) selectedTool = ToolType::MEF;
+        ImGui::SameLine();
+        if (ImGui::Button("Vertice", buttonSize)) selectedTool = ToolType::SelectVertex;
+
+        if (ImGui::Button("KVFS", buttonSize)) selectedTool = ToolType::KVFS;
+        ImGui::SameLine();
+        if (ImGui::Button("KEV", buttonSize)) selectedTool = ToolType::KEV;
+        ImGui::SameLine();
+        if (ImGui::Button("KEF", buttonSize)) selectedTool = ToolType::KEF;
+
+        // primitivas
+        if (ImGui::Button("Esfera", buttonSize)) selectedTool = ToolType::Sphere;
+        ImGui::SameLine();
+        if (ImGui::Button("Cubo", buttonSize)) selectedTool = ToolType::Cube;
+        ImGui::SameLine();
+        if (ImGui::Button("Cone", buttonSize)) selectedTool = ToolType::Cone;
+        ImGui::SameLine();
+        if (ImGui::Button("Cilindro", buttonSize)) selectedTool = ToolType::Cylinder;
+
+        // operações
+        if (ImGui::Button("Volume", buttonSize)) selectedTool = ToolType::Volume;
+        ImGui::SameLine();
+        if (ImGui::Button("Area", buttonSize)) selectedTool = ToolType::Area;
+        ImGui::SameLine();
+        if (ImGui::Button("Wireframe", buttonSize) && toggleWireframe) toggleWireframe();
+        ImGui::SameLine();
+        if (ImGui::Button("Faces", buttonSize) && toggleCell) toggleCell();
+
+        // ferramentas
+        if (ImGui::Button("Mover", buttonSize)) {selectedTool = ToolType::Move; ResetTransformValues();}
+        ImGui::SameLine();
+        if (ImGui::Button("Escalar", buttonSize)) {selectedTool = ToolType::Scale; ResetTransformValues();}
+        ImGui::SameLine();
+        if (ImGui::Button("Rotac.", buttonSize)) {selectedTool = ToolType::Rotate; ResetTransformValues();}
+
+        if (ImGui::Button("Exportar", buttonSize)) selectedTool = ToolType::Export;
+        ImGui::SameLine();
+        if (ImGui::Button("Importar", buttonSize)) selectedTool = ToolType::Import;
     }
 
     if (ImGui::Button("Camera", buttonSize)) selectedTool = ToolType::Camera;
@@ -212,7 +261,7 @@ void Interface::RenderObjectListSection(const std::vector<std::string>& objectNa
     ImGui::EndChild();
 }
 
-void Interface::RenderDetailsSection(const std::vector<std::string>& objectNames) {
+void Interface::RenderDetailsSection(const std::vector<std::string>& objectNames, std::vector<Vertex*> selectedVertices) {
     ImGui::Text("DETALHES");
 
     switch (selectedTool) {
@@ -222,9 +271,15 @@ void Interface::RenderDetailsSection(const std::vector<std::string>& objectNames
                 ImGui::InputFloat("Raio", &sphereRadius);
                 ImGui::InputInt("MaxLevel", &maxLevel);
             }
-            if (ImGui::Button("Aplicar") && OnCreateSphere && OnCreateCSGSphere) {
+
+            if (selectCollection == ObjectToolCollection::BREP) {
+                ImGui::InputInt("Resolução", &brepResolution);
+            }
+
+            if (ImGui::Button("Aplicar") && OnCreateSphere && OnCreateCSGSphere && OnCreateBREPSphere) {
                 if (selectCollection == ObjectToolCollection::Octree) OnCreateSphere(label, sphereRadius, maxLevel);
                 else if (selectCollection == ObjectToolCollection::CSG) OnCreateCSGSphere(label);
+                else if (selectCollection == ObjectToolCollection::BREP) OnCreateBREPSphere(label, brepResolution);
                 ResetInputs();
             }
             break;
@@ -249,9 +304,10 @@ void Interface::RenderDetailsSection(const std::vector<std::string>& objectNames
                 ImGui::InputFloat("Z", &rotationZ);
             }
 
-            if (ImGui::Button("Aplicar") && OnCreateCube && OnCreateCSGCube) {
+            if (ImGui::Button("Aplicar") && OnCreateCube && OnCreateCSGCube && OnCreateBREPCube) {
                 if (selectCollection == ObjectToolCollection::Octree) OnCreateCube(label, cubeSizeX, cubeSizeY, cubeSizeZ, maxLevel, rotationX, rotationY, rotationZ);
                 else if (selectCollection == ObjectToolCollection::CSG) OnCreateCSGCube(label);
+                else if (selectCollection == ObjectToolCollection::BREP) OnCreateBREPCube(label);
                 ResetInputs();
             }
             break;
@@ -274,9 +330,14 @@ void Interface::RenderDetailsSection(const std::vector<std::string>& objectNames
                 ImGui::InputFloat("Z", &rotationZ);
             }
 
-            if (ImGui::Button("Aplicar") && OnCreateCylinder && OnCreateCSGCylinder) {
+            if (selectCollection == ObjectToolCollection::BREP) {
+                ImGui::InputInt("Resolução", &brepResolution);
+            }
+
+            if (ImGui::Button("Aplicar") && OnCreateCylinder && OnCreateCSGCylinder && OnCreateBREPCylinder) {
                 if (selectCollection == ObjectToolCollection::Octree) OnCreateCylinder(label, cylinderRadius, cylinderHeight, maxLevel, rotationX, rotationY, rotationZ);
                 else if (selectCollection == ObjectToolCollection::CSG) OnCreateCSGCylinder(label);
+                else if (selectCollection == ObjectToolCollection::BREP) OnCreateBREPCylinder(label, brepResolution);
                 ResetInputs();
             }
             break;
@@ -299,9 +360,14 @@ void Interface::RenderDetailsSection(const std::vector<std::string>& objectNames
                 ImGui::InputFloat("Z", &rotationZ);
             }
 
+            if (selectCollection == ObjectToolCollection::BREP) {
+                ImGui::InputInt("Resolução", &brepResolution);
+            }
+
             if (ImGui::Button("Aplicar") && OnCreateCone && OnCreateCSGCone) {
                 if (selectCollection == ObjectToolCollection::Octree) OnCreateCone(label, coneRadius, coneHeight, maxLevel, rotationX, rotationY, rotationZ);
                 else if (selectCollection == ObjectToolCollection::CSG) OnCreateCSGCone(label);
+                else if (selectCollection == ObjectToolCollection::BREP) OnCreateBREPCone(label, brepResolution);
 
                 ResetInputs();
             }
@@ -431,11 +497,16 @@ void Interface::RenderDetailsSection(const std::vector<std::string>& objectNames
                     ImGui::InputFloat("X", &csgTransformValues.x);
                     ImGui::InputFloat("Y", &csgTransformValues.y);
                     ImGui::InputFloat("Z", &csgTransformValues.z);
+                } else if (selectCollection == ObjectToolCollection::BREP) {
+                    ImGui::InputFloat("X", &brepTransformValues.x);
+                    ImGui::InputFloat("Y", &brepTransformValues.y);
+                    ImGui::InputFloat("Z", &brepTransformValues.z);
                 }
 
-                if (ImGui::Button("Aplicar") && OnMoveObject && OnMoveCSGObject) {
+                if (ImGui::Button("Aplicar") && OnMoveObject && OnMoveCSGObject && OnMoveBREPObject) {
                     if (selectCollection == ObjectToolCollection::Octree) OnMoveObject(selectedAxys, translation, useGlobalTransform);
                     else if (selectCollection == ObjectToolCollection::CSG) OnMoveCSGObject(csgTransformValues);
+                    else if (selectCollection == ObjectToolCollection::BREP) OnMoveBREPObject(brepTransformValues);
                     ResetInputs();
                 }
             }
@@ -457,11 +528,16 @@ void Interface::RenderDetailsSection(const std::vector<std::string>& objectNames
                     ImGui::InputFloat("X", &csgTransformValues.x);
                     ImGui::InputFloat("Y", &csgTransformValues.y);
                     ImGui::InputFloat("Z", &csgTransformValues.z);
+                } else if (selectCollection == ObjectToolCollection::BREP) {
+                    ImGui::InputFloat("X", &brepTransformValues.x);
+                    ImGui::InputFloat("Y", &brepTransformValues.y);
+                    ImGui::InputFloat("Z", &brepTransformValues.z);
                 }
 
-                if (ImGui::Button("Aplicar") && OnScaleObject && OnScaleCSGObject) {
+                if (ImGui::Button("Aplicar") && OnScaleObject && OnScaleCSGObject && OnScaleBREPObject) {
                     if (selectCollection == ObjectToolCollection::Octree) OnScaleObject(scale, useGlobalTransform);
                     else if (selectCollection == ObjectToolCollection::CSG) OnScaleCSGObject(csgTransformValues);
+                    else if (selectCollection == ObjectToolCollection::BREP) OnScaleBREPObject(brepTransformValues);
                     ResetInputs();
                 }
             }
@@ -477,12 +553,18 @@ void Interface::RenderDetailsSection(const std::vector<std::string>& objectNames
                     ImGui::InputFloat("X", &csgTransformValues.x);
                     ImGui::InputFloat("Y", &csgTransformValues.y);
                     ImGui::InputFloat("Z", &csgTransformValues.z);
-
-                    if (ImGui::Button("Aplicar") && OnScaleObject && OnScaleCSGObject) {
-                        OnRotateCSGObject(csgTransformValues);
-                        ResetInputs();
-                    }
+                } else if (selectCollection == ObjectToolCollection::BREP) {
+                    ImGui::InputFloat("X", &brepTransformValues.x);
+                    ImGui::InputFloat("Y", &brepTransformValues.y);
+                    ImGui::InputFloat("Z", &brepTransformValues.z);
                 }
+
+                if (ImGui::Button("Aplicar") && OnScaleObject && OnScaleCSGObject) {
+                    if (selectCollection == ObjectToolCollection::CSG) OnRotateCSGObject(csgTransformValues);
+                    else if (selectCollection == ObjectToolCollection::BREP) OnRotateBREPObject(brepTransformValues);
+                    ResetInputs();
+                }
+
             }
             break;
 
@@ -592,7 +674,7 @@ void Interface::RenderDetailsSection(const std::vector<std::string>& objectNames
             }
             break;
 
-        case ToolType::Import: {
+        case ToolType::Import:
             ImGui::Text("Arquivos em files/input/");
 
             ImGui::BeginChild("files", ImVec2(0.0f, -80.0f), false);
@@ -630,7 +712,114 @@ void Interface::RenderDetailsSection(const std::vector<std::string>& objectNames
             ImGui::EndDisabled();
 
             break;
-        }
+
+        case ToolType::MVFS:
+            if (selectCollection == ObjectToolCollection::BREP) {
+                ImGui::InputText("Nome", &label);
+                ImGui::Text("Vértice inicial:");
+                ImGui::InputFloat("X", &brepTransformValues.x);
+                ImGui::InputFloat("Y", &brepTransformValues.y);
+                ImGui::InputFloat("Z", &brepTransformValues.z);
+
+                if (ImGui::Button("Aplicar") && OnMVFS) {
+                    OnMVFS(label, brepTransformValues);
+                    ResetInputs();
+                }
+            }
+            break;
+
+        case ToolType::KVFS:
+            if (selectCollection == ObjectToolCollection::BREP) {
+                if (selectedVertices[0] != nullptr) {
+                    ImGui::Text("Vértice selecionado 1: %d", selectedVertices[0]->id);
+
+                    ImGui::Text("Destruir objeto?");
+
+                    if (ImGui::Button("Aplicar") && OnKVFS) {
+                        OnKVFS();
+                        ResetInputs();
+                    }
+                }
+                else ImGui::Text("Selecione um vértice");
+            }
+            break;
+
+        case ToolType::MEV:
+            if (selectCollection == ObjectToolCollection::BREP) {
+                if (selectedVertices[0] != nullptr) {
+                    ImGui::Text("Vértice selecionado 1: %d", selectedVertices[0]->id);
+
+                    ImGui::Text("Novo vértice:");
+                    ImGui::InputFloat("X", &brepTransformValues.x);
+                    ImGui::InputFloat("Y", &brepTransformValues.y);
+                    ImGui::InputFloat("Z", &brepTransformValues.z);
+
+                    if (ImGui::Button("Aplicar") && OnMEV) {
+                        OnMEV(brepTransformValues);
+                        ResetInputs();
+                    }
+                }
+                else ImGui::Text("Selecione um vértice");
+            }
+            break;
+
+        case ToolType::KEV:
+            if (selectCollection == ObjectToolCollection::BREP) {
+                if (selectedVertices[0] != nullptr) {
+                    ImGui::Text("Vértice selecionado 1: %d", selectedVertices[0]->id);
+
+                    ImGui::Text("Destruir a vértice e sua aresta?");
+
+                    if (ImGui::Button("Aplicar") && OnKEV) {
+                        OnKEV();
+                        ResetInputs();
+                    }
+                } else ImGui::Text("Selecione um vértice");
+            }
+            break;
+
+        case ToolType::MEF:
+            if (selectCollection == ObjectToolCollection::BREP) {
+                if (selectedVertices[0] != nullptr && selectedVertices[1] != nullptr) {
+                    ImGui::Text("Vértice selecionado 1: %d", selectedVertices[0]->id);
+                    ImGui::Text("Vértice selecionado 2: %d", selectedVertices[1]->id);
+
+                    if (ImGui::Button("Aplicar") && OnMEF) {
+                        OnMEF();
+                        ResetInputs();
+                    }
+                } else ImGui::Text("Selecione dois vértices");
+            }
+            break;
+
+        case ToolType::KEF:
+            if (selectCollection == ObjectToolCollection::BREP) {
+                if (selectedVertices[0] != nullptr && selectedVertices[1] != nullptr) {
+                    ImGui::Text("Vértice selecionado 1: %d", selectedVertices[0]->id);
+                    ImGui::Text("Vértice selecionado 2: %d", selectedVertices[1]->id);
+
+                    ImGui::Text("Destruir a aresta entre esses vertices?");
+
+                    if (ImGui::Button("Aplicar") && OnKEF) {
+                        OnKEF();
+                        ResetInputs();
+                    }
+                } else ImGui::Text("Selecione dois vértices");
+            }
+            break;
+
+        case ToolType::SelectVertex:
+            if (selectCollection == ObjectToolCollection::BREP) {
+                ImGui::Text("Ferramenta de seleção de vértice");
+                ImGui::Text("Clique na tela para selecionar");
+                ImGui::Text("");
+                ImGui::Text("Mouse Esq. p/ seleção principal");
+                ImGui::Text("Mouse Esq. p/ seleção secundaria");
+
+                if (selectedObjectIndex < 0) ImGui::Text("Selecione um objeto na lista acima.");
+                else ImGui::Text("Objeto selecionado: %d", selectedObjectIndex);
+            }
+            break;
 
         case ToolType::None:
         default:
@@ -689,4 +878,12 @@ void Interface::DrawCameraGizmo(const Camera& camera, int navBarSize, int viewpo
     }
 
     ImGui::End();
+}
+
+ToolType Interface::getSelectedTool() {
+    return selectedTool;
+}
+
+void Interface::resetSelectedTool() {
+    selectedTool = ToolType::None;
 }

@@ -5,6 +5,7 @@
 #include "../Engine/Primitives/Primitive.h"
 #include "../Engine/Octree/Octree.h"
 #include "../Engine/CSG/CSG.h"
+#include "../Engine/BRep/BRep.h"
 #include "Camera.h"
 #include "Shader.h"
 
@@ -18,6 +19,9 @@ public:
     void DrawOctree(const Node*, Shader&, bool, bool, int, int);
 
     void DrawMesh(const std::vector<Triangle>&, Shader&, float, const glm::vec3&);
+    void DrawBrepWireFrame(const std::vector<std::unique_ptr<Edge>>&, Shader&);
+    void DrawBrepVertices(const std::vector<std::unique_ptr<Vertex>>&, Shader&);
+    void DrawVertex(const Vertex*, Shader&);
 
 private:
     GLuint VAO{};

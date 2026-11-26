@@ -53,6 +53,7 @@ public:
     Object& getSecondSelectedObject();
 
     std::vector<Object>& getObjects();
+    bool hasAnObjectSelected();
 
     void updateOctreeFromSelectedCSG();
 
@@ -73,6 +74,10 @@ public:
     RenderType getRenderType() const;
     void toggleRenderType();
 
+    void resetSelectedVertex();
+    void setSelectedVertex(Vertex*, int);
+    std::vector<Vertex*> getSelectedVertices();
+
 private:
     SceneState state = SceneState::Static;
     RenderType renderType = RenderType::Default;
@@ -84,4 +89,6 @@ private:
     bool showCell = true;
     int selectedObject = -1;
     int secondSelectedObject = -1;
+
+    std::vector<Vertex*> selectedVertices = {nullptr, nullptr};
 };

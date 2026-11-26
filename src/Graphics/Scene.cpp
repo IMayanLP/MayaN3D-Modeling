@@ -20,6 +20,7 @@ bool Scene::getShowCell() const {
 
 void Scene::setSelectedObject(int index) {
     selectedObject = index;
+    selectedVertices = {nullptr, nullptr};
 }
 
 void Scene::setSecondSelectedObject(int index) {
@@ -28,10 +29,12 @@ void Scene::setSecondSelectedObject(int index) {
 
 void Scene::resetSelectedIndex() {
     secondSelectedObject = -1;
+    selectedVertices = {nullptr, nullptr};
 }
 
 void Scene::resetSecondSelectedIndex() {
     secondSelectedObject = -1;
+    selectedVertices = {nullptr, nullptr};
 }
 
 void Scene::setSceneState(SceneState newState) {
@@ -80,6 +83,10 @@ Object& Scene::getSecondSelectedObject() {
 
 std::vector<Object>& Scene::getObjects() {
     return objects;
+}
+
+bool Scene::hasAnObjectSelected() {
+    return selectedObject < 0 ? false : true;
 }
 
 void Scene::addOctree(Octree&& octree) {
@@ -188,7 +195,18 @@ void Scene::RenderScene(Renderer& renderer, Shader& shader, Camera& camera, RayC
                     else renderer.DrawOctree(o.octree.GetRoot(), shader, showWireframe, showCell, 0, o.octree.GetMaxLevel());
                 } else renderer.DrawOctree(o.octree.GetRoot(), shader, showWireframe, showCell, 0, maxLevelOnMoving);
             } else if (o.type == ObjectType::BRep) {
-                renderer.DrawMesh(o.mesh, shader, 1, {0.0f, 0.0f, 0.0f});
+                if (showCell) renderer.DrawMesh(o.mesh, shader, 1, {0.0f, 0.0f, 0.0f});
+                shader.SetVec3("objectColor", {1.0f, 0.0f, 0.0f});
+                for (Vertex* v: selectedVertices) {
+                    if (v != nullptr) {
+                        renderer.DrawVertex(v, shader);
+                    }
+                }
+                if (showWireframe) {
+                    shader.SetVec3("objectColor", {0.0f, 0.0f, 0.0f});
+                    if (o.brep.GetEdgesSize() < 1) renderer.DrawBrepVertices(o.brep.GetVertices(), shader);
+                    else renderer.DrawBrepWireFrame(o.brep.GetEdges(), shader);
+                }
             }
         }
     }
@@ -198,11 +216,15 @@ std::vector<std::string> Scene::getObjectNames() const {
     std::vector<std::string> objectNames;
 
     for (const Object& o : objects) {
-        std::string objType = o.type == ObjectType::Octree ? "[Octree] " : "[CSG] ";
+        std::string objType;
+        if (o.type == ObjectType::Octree) objType = "[Octree] ";
+        else if (o.type == ObjectType::CSG) objType = "[CSG] ";
+        else if (o.type == ObjectType::BRep) objType = "[BRep] ";
         std::string objVisibility = !o.visible ? " <Oculto>" : "";
         std::string label;
         if (o.type == ObjectType::Octree) label = o.octree.getLabel();
         else if (o.type == ObjectType::CSG) label = o.csg.getLabel();
+        else if (o.type == ObjectType::BRep) label = o.brep.getLabel();
         if (label.empty()) label = "unnamed";
         objectNames.push_back(objType + label + objVisibility);
     }
@@ -221,4 +243,21 @@ RenderType Scene::getRenderType() const {
 void Scene::toggleRenderType() {
     if (renderType == RenderType::Default) renderType = RenderType::RayCast;
     else renderType = RenderType::Default;
+}
+
+void Scene::setSelectedVertex(Vertex* v, int index) {
+    if (index == 0) selectedVertices[0] = v;
+    else if (index == 1) selectedVertices[1] = v;
+    else {
+        if (selectedVertices[0] == nullptr) selectedVertices[0] = v;
+        else selectedVertices[1] = v;
+    }
+}
+
+void Scene::resetSelectedVertex() {
+    selectedVertices = {nullptr, nullptr};
+}
+
+std::vector<Vertex*> Scene::getSelectedVertices() {
+    return selectedVertices;
 }
