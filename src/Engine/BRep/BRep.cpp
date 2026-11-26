@@ -1033,7 +1033,116 @@ float BRep::CalculateVolume(std::vector<Triangle>& mesh) {
 
 
 // I/O
+bool BRep::Import(std::vector<glm::vec3>& objVertices, std::vector<std::vector<int>>& objFaces) {
+    if (objFaces.empty()) return false;
 
+    std::vector<Vertex*> vertexMap(objVertices.size(), nullptr);
+
+    // Criar vértices únicos
+    for (const std::vector<int>& face : objFaces) {
+        for (int index : face) {
+            if (index < 0 || index >= objVertices.size()) return false;
+            if (vertexMap[index] != nullptr) continue;
+
+            std::unique_ptr<Vertex> vertex = std::make_unique<Vertex>();
+            vertex->id = static_cast<int>(vertices.size());
+            vertex->coords = objVertices[index];
+            vertex->e = nullptr;
+
+            vertexMap[index] = vertex.get();
+            vertices.push_back(std::move(vertex));
+        }
+    }
+
+    // Criar arestas únicas
+    for (const std::vector<int>& face : objFaces) {
+        if (face.size() < 3) return false;
+
+        for (int i = 0; i < face.size(); i++) {
+            Vertex* vs = vertexMap[face[i]];
+            Vertex* ve = vertexMap[face[(i + 1) % face.size()]];
+
+            if (vs == ve) return false;
+            if (FindEdgeLinear(vs, ve) != nullptr) continue;
+
+            std::unique_ptr<Edge> edge = std::make_unique<Edge>();
+            edge->id = static_cast<int>(edges.size());
+            edge->vs = vs;
+            edge->ve = ve;
+            edge->fcw = nullptr;
+            edge->fccw = nullptr;
+            edge->ncw = nullptr;
+            edge->pcw = nullptr;
+            edge->nccw = nullptr;
+            edge->pccw = nullptr;
+
+            if (vs->e == nullptr) vs->e = edge.get();
+            if (ve->e == nullptr) ve->e = edge.get();
+
+            edges.push_back(std::move(edge));
+        }
+    }
+
+    // Criar faces e associar arestas
+    for (const std::vector<int>& faceIndices : objFaces) {
+        std::unique_ptr<Face> face = std::make_unique<Face>();
+        face->id = static_cast<int>(faces.size());
+        face->e = nullptr;
+
+        Face* currentFace = face.get();
+        std::vector<Edge*> faceEdges;
+
+        for (int i = 0; i < faceIndices.size(); i++) {
+            Vertex* vs = vertexMap[faceIndices[i]];
+            Vertex* ve = vertexMap[faceIndices[(i + 1) % faceIndices.size()]];
+
+            Edge* edge = FindEdgeLinear(vs, ve);
+            if (edge == nullptr) return false;
+
+            faceEdges.push_back(edge);
+        }
+
+        // Associar faces às arestas
+        for (int i = 0; i < faceEdges.size(); i++) {
+            Edge* edge = faceEdges[i];
+
+            Vertex* vs = vertexMap[faceIndices[i]];
+            Vertex* ve = vertexMap[faceIndices[(i + 1) % faceIndices.size()]];
+
+            bool sameDirection = edge->vs == vs && edge->ve == ve;
+
+            if (sameDirection) {
+                if (edge->fccw != nullptr) return false;
+                edge->fccw = currentFace;
+            } else {
+                if (edge->fcw != nullptr) return false;
+                edge->fcw = currentFace;
+            }
+        }
+
+        // Preencher navegação das arestas
+        for (int i = 0; i < faceEdges.size(); i++) {
+            Edge* current = faceEdges[i];
+            Edge* next = faceEdges[(i + 1) % faceEdges.size()];
+            Edge* previous = faceEdges[(i - 1 + faceEdges.size()) % faceEdges.size()];
+
+            if (current->fccw == currentFace) {
+                current->nccw = next;
+                current->pccw = previous;
+            } else {
+                current->ncw = next;
+                current->pcw = previous;
+            }
+        }
+
+        currentFace->e = faceEdges[0];
+        faces.push_back(std::move(face));
+    }
+
+    Print();
+
+    return true;
+}
 
 
 
@@ -1127,8 +1236,6 @@ Vertex* BRep::SelectVertex(Ray ray) {
             selected = vertex.get();
         }
     }
-
-    if (selected != nullptr) std::cout << "Vertice encontrado: " << selected->id << std::endl;
 
     return selected;
 }

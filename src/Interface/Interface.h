@@ -101,6 +101,9 @@ class Interface {
         std::function<void()> OnKEV;
         std::function<void()> OnKEF;
 
+        std::function<void(std::string fileName)> OnImportBREPObject;
+        std::function<void()> PrintWingedEdge;
+
         // Gerais
         std::function<void(int)> OnSelectObject;
         std::function<void(int)> OnSelectSecondObject;

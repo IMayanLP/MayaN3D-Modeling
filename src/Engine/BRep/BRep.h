@@ -82,6 +82,9 @@ class BRep {
         static float CalculateSurfaceArea(std::vector<Triangle>&);
         static float CalculateVolume(std::vector<Triangle>&);
 
+        // I/O
+        bool Import(std::vector<glm::vec3>&, std::vector<std::vector<int>>&);
+
         // Demais
         const std::vector<std::unique_ptr<Edge>>& GetEdges() const;
         const std::vector<std::unique_ptr<Vertex>>& GetVertices() const;

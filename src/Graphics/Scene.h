@@ -79,6 +79,7 @@ public:
     std::vector<Vertex*> getSelectedVertices();
 
     bool ExportBRep(std::string&);
+    bool ImportBRep(const std::string&);
 
 private:
     SceneState state = SceneState::Static;

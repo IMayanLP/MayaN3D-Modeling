@@ -1,5 +1,11 @@
 ﻿#include "Scene.h"
 #include <fstream>
+#include <cmath>
+#include "SMC.h"
+#include <iostream>
+
+#include <iomanip>
+#include <algorithm>
 
 Scene::Scene() {}
 
@@ -323,4 +329,69 @@ bool Scene::ExportBRep(std::string& fileName) {
 
     file.close();
     return file.good();
+}
+
+bool Scene::ImportBRep(const std::string& fileName) {
+    std::ifstream file("files/input/" + fileName);
+    if (!file.is_open()) return false;
+
+    std::vector<glm::vec3> objVertices;
+    std::vector<std::vector<std::vector<int>>> objFaces;
+    std::vector<std::string> objLabels;
+
+    std::string line;
+    int currentObject = -1;
+
+    while (std::getline(file, line)) {
+        std::stringstream stream(line);
+        std::string label;
+
+        stream >> label;
+
+        if (label == "v") {
+            glm::vec3 vertex;
+            if (!(stream >> vertex.x >> vertex.y >> vertex.z)) return false;
+
+            objVertices.push_back(vertex);
+        }
+        else if (label == "o") {
+            std::string objectName;
+            std::getline(stream >> std::ws, objectName);
+
+            objFaces.emplace_back();
+            objLabels.push_back(objectName);
+            currentObject++;
+        }
+        else if (label == "f") {
+            if (currentObject < 0) {
+                objFaces.emplace_back();
+                currentObject = 0;
+            }
+
+            std::vector<int> face;
+            int index;
+
+            while (stream >> index) {
+                face.push_back(index - 1);
+            }
+
+            if (face.size() < 3) return false;
+
+            objFaces[currentObject].push_back(face);
+        }
+    }
+
+    for (int i = 0; i < objFaces.size(); i++) {
+        const std::vector<std::vector<int>>& faces = objFaces[i];
+        if (faces.empty()) continue;
+
+        BRep brep;
+        brep.setLabel(objLabels[i]);
+
+        if (!brep.Import(objVertices, const_cast<std::vector<std::vector<int>>&>(faces))) return false;
+
+        addBRep(std::move(brep));
+    }
+
+    return true;
 }

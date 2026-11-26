@@ -234,6 +234,8 @@ void Interface::RenderToolsSection() {
         if (ImGui::Button("Exportar", buttonSize)) selectedTool = ToolType::Export;
         ImGui::SameLine();
         if (ImGui::Button("Importar", buttonSize)) selectedTool = ToolType::Import;
+        ImGui::SameLine();
+        if (ImGui::Button("Print", buttonSize) && PrintWingedEdge) PrintWingedEdge();
     }
 
     if (ImGui::Button("Camera", buttonSize)) selectedTool = ToolType::Camera;
@@ -713,9 +715,10 @@ void Interface::RenderDetailsSection(const std::vector<std::string>& objectNames
             ImGui::EndChild();
 
             ImGui::BeginDisabled(selectedImportFile.empty());
-            if (ImGui::Button("Aplicar") && OnImportObject && OnImportCSGObject) {
+            if (ImGui::Button("Aplicar") && OnImportObject && OnImportCSGObject && OnImportBREPObject) {
                 if (selectCollection == ObjectToolCollection::Octree) OnImportObject(selectedImportFile);
                 if (selectCollection == ObjectToolCollection::CSG) OnImportCSGObject(selectedImportFile);
+                if (selectCollection == ObjectToolCollection::BREP) OnImportBREPObject(selectedImportFile);
                 ResetInputs();
             }
             if (selectCollection == ObjectToolCollection::CSG) {

@@ -325,6 +325,10 @@ int main() {
         scene.toggleCell();
     };
 
+    UI.PrintWingedEdge = [&scene]() {
+        if (scene.hasAnObjectSelected()) scene.getSelectedBRep().Print();
+    };
+
     UI.OnUnion = [&scene, &UI](std::string label, int maxLevel, bool useDynamicLevel) {
         if (scene.getSelectedObjectType() == ObjectType::Octree && scene.getSecondSelectedObjectType() == ObjectType::Octree) {
             Octree newOctree = Octree::ApplyUnion(scene.getSelectedOctree(), scene.getSecondSelectedOctree(), maxLevel, useDynamicLevel);
@@ -471,6 +475,11 @@ int main() {
     UI.OnImportLegacyCSGObject = [&scene](std::string fileName) {
         CSG newCSG = CSG::ImportLegacy(fileName);
         scene.addCSG(std::move(newCSG));
+    };
+
+    UI.OnImportBREPObject = [&scene](std::string fileName) {
+        if (scene.ImportBRep(fileName)) std::cout << "Imported BREPs" << std::endl;
+        else std::cout << "Falhou ao importar" << std::endl;
     };
 
     UI.OnRenderObject = [&scene, &camera](std::string fileName, int resolutionX, int resolutionY, bool useDebugRay, Ray ray) {
