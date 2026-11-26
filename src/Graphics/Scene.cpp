@@ -1,4 +1,5 @@
 ﻿#include "Scene.h"
+#include <fstream>
 
 Scene::Scene() {}
 
@@ -260,4 +261,66 @@ void Scene::resetSelectedVertex() {
 
 std::vector<Vertex*> Scene::getSelectedVertices() {
     return selectedVertices;
+}
+
+
+
+
+
+// BRep I/O
+bool Scene::ExportBRep(std::string& fileName) {
+    std::ofstream file("files/output/" + fileName + ".txt");
+    if (!file.is_open()) return false;
+
+    std::vector<glm::vec3> uniqueVertices;
+
+    for (Object& o : objects) {
+        if (!o.visible) continue;
+        for (auto& v : o.brep.GetVertices()) {
+            glm::vec3 vcoords = v->coords;
+
+            int index = -1;
+            for (int i = 0; i < uniqueVertices.size(); i++) {
+                if (glm::length(uniqueVertices[i] - vcoords) < 1e-5f) {
+                    index = i;
+                    break;
+                }
+            }
+
+            if (index == -1) {
+                uniqueVertices.push_back(vcoords);
+            }
+        }
+    }
+
+    for (glm::vec3& p : uniqueVertices) file << "v " << p.x << " " << p.y << " " << p.z << "\n";
+
+    for (Object& o : objects) {
+        if (!o.visible) continue;
+        file << "\no " << o.brep.getLabel() << "\n";
+        for (auto& f : o.brep.GetFaces()) {
+            std::vector<Vertex*> vertices = o.brep.GetVerticesOfFace(f.get());
+            file << "f";
+
+            for (auto& v : vertices) {
+                int index = -1;
+                for (size_t i = 0; i < uniqueVertices.size(); i++) {
+                    glm::vec3 vcoords = v->coords;
+                    if (glm::length(uniqueVertices[i] - vcoords) < 1e-5f) {
+                        index = i;
+                        break;
+                    }
+                }
+
+                if (index != -1) {
+                    file << " " << index + 1;
+                }
+            }
+
+            file << "\n";
+        }
+    }
+
+    file.close();
+    return file.good();
 }

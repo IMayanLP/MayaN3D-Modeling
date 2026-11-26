@@ -1032,6 +1032,13 @@ float BRep::CalculateVolume(std::vector<Triangle>& mesh) {
 
 
 
+// I/O
+
+
+
+
+
+
 // Render e Modeling Description Tools
 const std::vector<std::unique_ptr<Edge>>& BRep::GetEdges() const {
     return edges;
@@ -1039,6 +1046,10 @@ const std::vector<std::unique_ptr<Edge>>& BRep::GetEdges() const {
 
 const std::vector<std::unique_ptr<Vertex>>& BRep::GetVertices() const {
     return vertices;
+}
+
+const std::vector<std::unique_ptr<Face>>& BRep::GetFaces() const {
+    return faces;
 }
 
 void BRep::setLabel(std::string name) {

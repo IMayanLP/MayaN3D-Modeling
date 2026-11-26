@@ -649,10 +649,9 @@ void Interface::RenderDetailsSection(const std::vector<std::string>& objectNames
 
 
         case ToolType::Export:
-            if (selectedObjectIndex < 0) {
-                ImGui::Text("Selecione um objeto na lista acima.");
-            } else {
-                ImGui::Text("Objeto selecionado: %d", selectedObjectIndex);
+            if (selectCollection == ObjectToolCollection::BREP) {
+                ImGui::Text("Para BRep todos os objetos visiveis");
+                ImGui::Text("são exportados para um .obj");
                 ImGui::InputText("Nome", &exportFileName);
 
                 bool validName = !exportFileName.empty();
@@ -660,17 +659,34 @@ void Interface::RenderDetailsSection(const std::vector<std::string>& objectNames
 
                 ImGui::BeginDisabled(!validName);
                 if (ImGui::Button("Aplicar") && OnExportObject) {
-                    OnExportObject(exportFileName);
+                    OnExportObject(exportFileName, 1);
                     ResetInputs();
                 }
-                if (selectCollection == ObjectToolCollection::CSG) {
-                    ImGui::SameLine();
-                    if (ImGui::Button("Aplicar (Legado)") && OnExportLegacyObject) {
-                        OnExportLegacyObject(exportFileName);
+                ImGui::EndDisabled();
+            } else {
+                if (selectedObjectIndex < 0) {
+                    ImGui::Text("Selecione um objeto na lista acima.");
+                } else {
+                    ImGui::Text("Objeto selecionado: %d", selectedObjectIndex);
+                    ImGui::InputText("Nome", &exportFileName);
+
+                    bool validName = !exportFileName.empty();
+                    if (!validName) ImGui::TextDisabled("Digite um nome de arquivo.");
+
+                    ImGui::BeginDisabled(!validName);
+                    if (ImGui::Button("Aplicar") && OnExportObject) {
+                        OnExportObject(exportFileName, 0);
                         ResetInputs();
                     }
+                    if (selectCollection == ObjectToolCollection::CSG) {
+                        ImGui::SameLine();
+                        if (ImGui::Button("Aplicar (Legado)") && OnExportLegacyObject) {
+                            OnExportLegacyObject(exportFileName);
+                            ResetInputs();
+                        }
+                    }
+                    ImGui::EndDisabled();
                 }
-                ImGui::EndDisabled();
             }
             break;
 

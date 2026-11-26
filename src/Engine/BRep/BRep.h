@@ -85,6 +85,7 @@ class BRep {
         // Demais
         const std::vector<std::unique_ptr<Edge>>& GetEdges() const;
         const std::vector<std::unique_ptr<Vertex>>& GetVertices() const;
+        const std::vector<std::unique_ptr<Face>>& GetFaces() const;
 
         const size_t GetEdgesSize() const;
         const size_t GetVerticesSize() const;

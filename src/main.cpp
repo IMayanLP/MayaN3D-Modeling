@@ -423,15 +423,20 @@ int main() {
         camera.ResetZoom();
     };
 
-    UI.OnExportObject = [&scene](std::string fileName) {
-        if (scene.getSelectedObjectType() == ObjectType::Octree) {
-            fs::create_directories("files/output");
+    UI.OnExportObject = [&scene](std::string fileName, int exportAllScene) {
+        if (exportAllScene) {
+            if (scene.ExportBRep(fileName)) std::cout << "Exportado com sucesso" << '\n';
+            else std::cout << "Erro na exportação" << '\n';
+        } else {
+            if (scene.getSelectedObjectType() == ObjectType::Octree) {
+                fs::create_directories("files/output");
 
-            std::ofstream file("files/output/" + fileName + ".txt");
-            file << scene.getSelectedOctree().ToString();
-        } else if (scene.getSelectedObjectType() == ObjectType::CSG) {
-            if (scene.getSelectedCSG().Export(fileName)) std::cout << "Exportado com sucesso" << '\n';
-            else std::cout << "A CSG não é compatível com esse tipo de exportação" << '\n';
+                std::ofstream file("files/output/" + fileName + ".txt");
+                file << scene.getSelectedOctree().ToString();
+            } else if (scene.getSelectedObjectType() == ObjectType::CSG) {
+                if (scene.getSelectedCSG().Export(fileName)) std::cout << "Exportado com sucesso" << '\n';
+                else std::cout << "A CSG não é compatível com esse tipo de exportação" << '\n';
+            }
         }
     };
 

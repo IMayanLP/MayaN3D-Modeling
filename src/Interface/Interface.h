@@ -117,7 +117,7 @@ class Interface {
         std::function<float()> OnCalculateVolume;
         std::function<float()> OnCalculateArea;
 
-        std::function<void(std::string fileName)> OnExportObject;
+        std::function<void(std::string fileName, int)> OnExportObject;
         std::function<void(std::string fileName)> OnExportLegacyObject;
         std::function<void(std::string fileName)> OnImportObject;
         std::function<void(std::string fileName)> OnImportCSGObject;
@@ -141,7 +141,7 @@ class Interface {
         void RenderObjectListSection(const std::vector<std::string>&);
         void RenderDetailsSection(const std::vector<std::string>&, std::vector<Vertex*>);
 
-        ObjectToolCollection selectCollection = ObjectToolCollection::Octree;
+        ObjectToolCollection selectCollection = ObjectToolCollection::BREP;
         ToolType selectedTool = ToolType::None;
 
         int selectedObjectIndex = -1;

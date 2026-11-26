@@ -78,6 +78,8 @@ public:
     void setSelectedVertex(Vertex*, int);
     std::vector<Vertex*> getSelectedVertices();
 
+    bool ExportBRep(std::string&);
+
 private:
     SceneState state = SceneState::Static;
     RenderType renderType = RenderType::Default;
