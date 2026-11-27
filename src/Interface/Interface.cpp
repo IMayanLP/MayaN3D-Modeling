@@ -118,132 +118,233 @@ void Interface::RenderCollectionToolsSection() {
 
 
 void Interface::RenderToolsSection() {
-    const float spacing    = ImGui::GetStyle().ItemSpacing.x;
-    const float availWidth = ImGui::GetContentRegionAvail().x;
-    const ImVec2 buttonSize((availWidth - spacing * 3.0f) / 4.0f, 40.0f);
-
     if (selectCollection == ObjectToolCollection::Octree) {
         // primitivas
-        if (ImGui::Button("Esfera", buttonSize)) selectedTool = ToolType::Sphere;
+        if (ImGui::ImageButton("Cubo", (ImTextureID)(intptr_t)cuboBtn, ImVec2(24, 24))) selectedTool = ToolType::Cube;
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Cubo");
+
         ImGui::SameLine();
-        if (ImGui::Button("Cubo", buttonSize)) selectedTool = ToolType::Cube;
+        if (ImGui::ImageButton("Esfera", (ImTextureID)(intptr_t)esferaBtn, ImVec2(24, 24))) selectedTool = ToolType::Sphere;
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Esfera");
+
         ImGui::SameLine();
-        if (ImGui::Button("Cone", buttonSize)) selectedTool = ToolType::Cone;
+        if (ImGui::ImageButton("Cone", (ImTextureID)(intptr_t)coneBtn, ImVec2(24, 24))) selectedTool = ToolType::Cone;
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Cone");
+
         ImGui::SameLine();
-        if (ImGui::Button("Cilindro", buttonSize)) selectedTool = ToolType::Cylinder;
+        if (ImGui::ImageButton("Cilindro", (ImTextureID)(intptr_t)cilindroBtn, ImVec2(24, 24))) selectedTool = ToolType::Cylinder;
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Cilindro");
 
         // operações
-        if (ImGui::Button("Uniao", buttonSize)) selectedTool = ToolType::Union;
+        if (ImGui::ImageButton("Uniao", (ImTextureID)(intptr_t)uniaoBtn, ImVec2(24, 24))) selectedTool = ToolType::Union;
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("União");
+
         ImGui::SameLine();
-        if (ImGui::Button("Intersec.", buttonSize)) selectedTool = ToolType::Intersection;
-        ImGui::SameLine();
-        if (ImGui::Button("Volume", buttonSize)) selectedTool = ToolType::Volume;
-        ImGui::SameLine();
-        if (ImGui::Button("Area", buttonSize)) selectedTool = ToolType::Area;
+        if (ImGui::ImageButton("Intersec", (ImTextureID)(intptr_t)intersecaoBtn, ImVec2(24, 24))) selectedTool = ToolType::Intersection;
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Interseção");
 
         // ferramentas
-        if (ImGui::Button("Mover", buttonSize)) selectedTool = ToolType::Move;
         ImGui::SameLine();
-        if (ImGui::Button("Escalar", buttonSize)) selectedTool = ToolType::Scale;
+        if (ImGui::ImageButton("Mover", (ImTextureID)(intptr_t)moverBtn, ImVec2(24, 24))) {selectedTool = ToolType::Move;}
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Mover");
+
         ImGui::SameLine();
-        if (ImGui::Button("Exportar", buttonSize)) selectedTool = ToolType::Export;
+        if (ImGui::ImageButton("Escalar", (ImTextureID)(intptr_t)escalarBtn, ImVec2(24, 24))) {selectedTool = ToolType::Scale;}
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Escalar");
+
         ImGui::SameLine();
-        if (ImGui::Button("Importar", buttonSize)) selectedTool = ToolType::Import;
+        if (ImGui::ImageButton("Volume", (ImTextureID)(intptr_t)volumeBtn, ImVec2(24, 24))) selectedTool = ToolType::Volume;
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Volume");
+
+        ImGui::SameLine();
+        if (ImGui::ImageButton("Area", (ImTextureID)(intptr_t)areaBtn, ImVec2(24, 24))) selectedTool = ToolType::Area;
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Área");
 
         // visualização
-        if (ImGui::Button("Wireframe", buttonSize) && toggleWireframe) toggleWireframe();
+        if (ImGui::ImageButton("Wireframe", (ImTextureID)(intptr_t)wireframeBtn, ImVec2(24, 24)) && toggleWireframe) toggleWireframe();
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Wireframe");
+
         ImGui::SameLine();
-        if (ImGui::Button("Celulas", buttonSize) && toggleCell) toggleCell();
+        if (ImGui::ImageButton("Celulas", (ImTextureID)(intptr_t)celulasBtn, ImVec2(24, 24)) && toggleCell) toggleCell();
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Células");
+
         ImGui::SameLine();
-        if (ImGui::Button("RayCast", buttonSize) && OnToggleRenderType) OnToggleRenderType();
+        if (ImGui::ImageButton("RayCast", (ImTextureID)(intptr_t)raycastBtn, ImVec2(24, 24)) && OnToggleRenderType) OnToggleRenderType();
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("RayCast");
+
+        ImGui::SameLine();
+        if (ImGui::ImageButton("Exportar", (ImTextureID)(intptr_t)exportarBtn, ImVec2(24, 24))) selectedTool = ToolType::Export;
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Exportar");
+
+        ImGui::SameLine();
+        if (ImGui::ImageButton("Importar", (ImTextureID)(intptr_t)importarBtn, ImVec2(24, 24))) selectedTool = ToolType::Import;
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Importar");
     } else if (selectCollection == ObjectToolCollection::CSG) {
         // primitivas
-        if (ImGui::Button("Esfera", buttonSize)) selectedTool = ToolType::Sphere;
+        if (ImGui::ImageButton("Cubo", (ImTextureID)(intptr_t)cuboBtn, ImVec2(24, 24))) selectedTool = ToolType::Cube;
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Cubo");
+
         ImGui::SameLine();
-        if (ImGui::Button("Cubo", buttonSize)) selectedTool = ToolType::Cube;
+        if (ImGui::ImageButton("Esfera", (ImTextureID)(intptr_t)esferaBtn, ImVec2(24, 24))) selectedTool = ToolType::Sphere;
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Esfera");
+
         ImGui::SameLine();
-        if (ImGui::Button("Cone", buttonSize)) selectedTool = ToolType::Cone;
+        if (ImGui::ImageButton("Cone", (ImTextureID)(intptr_t)coneBtn, ImVec2(24, 24))) selectedTool = ToolType::Cone;
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Cone");
+
         ImGui::SameLine();
-        if (ImGui::Button("Cilindro", buttonSize)) selectedTool = ToolType::Cylinder;
+        if (ImGui::ImageButton("Cilindro", (ImTextureID)(intptr_t)cilindroBtn, ImVec2(24, 24))) selectedTool = ToolType::Cylinder;
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Cilindro");
 
         // operações
-        if (ImGui::Button("Uniao", buttonSize)) selectedTool = ToolType::Union;
-        ImGui::SameLine();
-        if (ImGui::Button("Intersec.", buttonSize)) selectedTool = ToolType::Intersection;
-        ImGui::SameLine();
-        if (ImGui::Button("Dif.", buttonSize)) selectedTool = ToolType::Difference;
+        if (ImGui::ImageButton("Uniao", (ImTextureID)(intptr_t)uniaoBtn, ImVec2(24, 24))) selectedTool = ToolType::Union;
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("União");
 
-        if (ImGui::Button("Volume", buttonSize)) selectedTool = ToolType::Volume;
         ImGui::SameLine();
-        if (ImGui::Button("Area", buttonSize)) selectedTool = ToolType::Area;
+        if (ImGui::ImageButton("Intersec", (ImTextureID)(intptr_t)intersecaoBtn, ImVec2(24, 24))) selectedTool = ToolType::Intersection;
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Interseção");
+
+        ImGui::SameLine();
+        if (ImGui::ImageButton("Dif.", (ImTextureID)(intptr_t)diferencaBtn, ImVec2(24, 24))) selectedTool = ToolType::Difference;
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Diferença");
 
         // ferramentas
-        if (ImGui::Button("Mover", buttonSize)) {selectedTool = ToolType::Move; ResetTransformValues();}
         ImGui::SameLine();
-        if (ImGui::Button("Escalar", buttonSize)) {selectedTool = ToolType::Scale; ResetTransformValues();}
-        ImGui::SameLine();
-        if (ImGui::Button("Rotac.", buttonSize)) {selectedTool = ToolType::Rotate; ResetTransformValues();}
+        if (ImGui::ImageButton("Mover", (ImTextureID)(intptr_t)moverBtn, ImVec2(24, 24))) {selectedTool = ToolType::Move; ResetTransformValues();}
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Mover");
 
-        if (ImGui::Button("Exportar", buttonSize)) selectedTool = ToolType::Export;
         ImGui::SameLine();
-        if (ImGui::Button("Importar", buttonSize)) selectedTool = ToolType::Import;
+        if (ImGui::ImageButton("Escalar", (ImTextureID)(intptr_t)escalarBtn, ImVec2(24, 24))) {selectedTool = ToolType::Scale; ResetTransformValues();}
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Escalar");
+
         ImGui::SameLine();
-        if (ImGui::Button("Render", buttonSize)) selectedTool = ToolType::Render;
+        if (ImGui::ImageButton("Rotacionar", (ImTextureID)(intptr_t)rotacionarBtn, ImVec2(24, 24))) {selectedTool = ToolType::Rotate; ResetTransformValues();}
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Rotacionar");
+
         ImGui::SameLine();
-        if (ImGui::Button("RayCast", buttonSize) && OnToggleRenderType) OnToggleRenderType();
+        if (ImGui::ImageButton("Volume", (ImTextureID)(intptr_t)volumeBtn, ImVec2(24, 24))) selectedTool = ToolType::Volume;
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Volume");
+
+        ImGui::SameLine();
+        if (ImGui::ImageButton("Area", (ImTextureID)(intptr_t)areaBtn, ImVec2(24, 24))) selectedTool = ToolType::Area;
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Área");
+
+        if (ImGui::ImageButton("RayCast", (ImTextureID)(intptr_t)raycastBtn, ImVec2(24, 24)) && OnToggleRenderType) OnToggleRenderType();
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("RayCast");
+
+        ImGui::SameLine();
+        if (ImGui::ImageButton("Render", (ImTextureID)(intptr_t)renderBtn, ImVec2(24, 24))) selectedTool = ToolType::Render;
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Render");
+
+        ImGui::SameLine();
+        if (ImGui::ImageButton("Exportar", (ImTextureID)(intptr_t)exportarBtn, ImVec2(24, 24))) selectedTool = ToolType::Export;
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Exportar");
+
+        ImGui::SameLine();
+        if (ImGui::ImageButton("Importar", (ImTextureID)(intptr_t)importarBtn, ImVec2(24, 24))) selectedTool = ToolType::Import;
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Importar");
     } else if (selectCollection == ObjectToolCollection::BREP) {
-        if (ImGui::Button("MVFS", buttonSize)) selectedTool = ToolType::MVFS;
-        ImGui::SameLine();
-        if (ImGui::Button("MEV", buttonSize)) selectedTool = ToolType::MEV;
-        ImGui::SameLine();
-        if (ImGui::Button("MEF", buttonSize)) selectedTool = ToolType::MEF;
-        ImGui::SameLine();
-        if (ImGui::Button("Vertice", buttonSize)) selectedTool = ToolType::SelectVertex;
+        if (ImGui::ImageButton("Vertice", (ImTextureID)(intptr_t)selectBtn, ImVec2(24, 24))) selectedTool = ToolType::SelectVertex;
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Selecionar vértice");
 
-        if (ImGui::Button("KVFS", buttonSize)) selectedTool = ToolType::KVFS;
         ImGui::SameLine();
-        if (ImGui::Button("KEV", buttonSize)) selectedTool = ToolType::KEV;
+        if (ImGui::ImageButton("MVFS", (ImTextureID)(intptr_t)mvfsBtn, ImVec2(24, 24))) selectedTool = ToolType::MVFS;
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("MVFS");
+
         ImGui::SameLine();
-        if (ImGui::Button("KEF", buttonSize)) selectedTool = ToolType::KEF;
+        if (ImGui::ImageButton("KVFS", (ImTextureID)(intptr_t)kvfsBtn, ImVec2(24, 24))) selectedTool = ToolType::KVFS;
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("KVFS");
+
+        ImGui::SameLine();
+        if (ImGui::ImageButton("MEV", (ImTextureID)(intptr_t)mevBtn, ImVec2(24, 24))) selectedTool = ToolType::MEV;
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("MEV");
+
+        ImGui::SameLine();
+        if (ImGui::ImageButton("KEV", (ImTextureID)(intptr_t)kevBtn, ImVec2(24, 24))) selectedTool = ToolType::KEV;
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("KEV");
+
+        ImGui::SameLine();
+        if (ImGui::ImageButton("MEF", (ImTextureID)(intptr_t)mefBtn, ImVec2(24, 24))) selectedTool = ToolType::MEF;
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("MEF");
+
+        ImGui::SameLine();
+        if (ImGui::ImageButton("KEF", (ImTextureID)(intptr_t)kefBtn, ImVec2(24, 24))) selectedTool = ToolType::KEF;
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("KEF");
 
         // primitivas
-        if (ImGui::Button("Esfera", buttonSize)) selectedTool = ToolType::Sphere;
-        ImGui::SameLine();
-        if (ImGui::Button("Cubo", buttonSize)) selectedTool = ToolType::Cube;
-        ImGui::SameLine();
-        if (ImGui::Button("Cone", buttonSize)) selectedTool = ToolType::Cone;
-        ImGui::SameLine();
-        if (ImGui::Button("Cilindro", buttonSize)) selectedTool = ToolType::Cylinder;
+        if (ImGui::ImageButton("Cubo", (ImTextureID)(intptr_t)cuboBtn, ImVec2(24, 24))) selectedTool = ToolType::Cube;
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Cubo");
 
-        // operações
-        if (ImGui::Button("Volume", buttonSize)) selectedTool = ToolType::Volume;
         ImGui::SameLine();
-        if (ImGui::Button("Area", buttonSize)) selectedTool = ToolType::Area;
+        if (ImGui::ImageButton("Esfera", (ImTextureID)(intptr_t)esferaBtn, ImVec2(24, 24))) selectedTool = ToolType::Sphere;
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Esfera");
+
         ImGui::SameLine();
-        if (ImGui::Button("Wireframe", buttonSize) && toggleWireframe) toggleWireframe();
+        if (ImGui::ImageButton("Cone", (ImTextureID)(intptr_t)coneBtn, ImVec2(24, 24))) selectedTool = ToolType::Cone;
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Cone");
+
         ImGui::SameLine();
-        if (ImGui::Button("Faces", buttonSize) && toggleCell) toggleCell();
+        if (ImGui::ImageButton("Cilindro", (ImTextureID)(intptr_t)cilindroBtn, ImVec2(24, 24))) selectedTool = ToolType::Cylinder;
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Cilindro");
 
         // ferramentas
-        if (ImGui::Button("Mover", buttonSize)) {selectedTool = ToolType::Move; ResetTransformValues();}
-        ImGui::SameLine();
-        if (ImGui::Button("Escalar", buttonSize)) {selectedTool = ToolType::Scale; ResetTransformValues();}
-        ImGui::SameLine();
-        if (ImGui::Button("Rotac.", buttonSize)) {selectedTool = ToolType::Rotate; ResetTransformValues();}
+        if (ImGui::ImageButton("Mover", (ImTextureID)(intptr_t)moverBtn, ImVec2(24, 24))) {selectedTool = ToolType::Move; ResetTransformValues();}
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Mover");
 
-        if (ImGui::Button("Exportar", buttonSize)) selectedTool = ToolType::Export;
         ImGui::SameLine();
-        if (ImGui::Button("Importar", buttonSize)) selectedTool = ToolType::Import;
+        if (ImGui::ImageButton("Escalar", (ImTextureID)(intptr_t)escalarBtn, ImVec2(24, 24))) {selectedTool = ToolType::Scale; ResetTransformValues();}
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Escalar");
+
         ImGui::SameLine();
-        if (ImGui::Button("Print", buttonSize) && PrintWingedEdge) PrintWingedEdge();
+        if (ImGui::ImageButton("Rotacionar", (ImTextureID)(intptr_t)rotacionarBtn, ImVec2(24, 24))) {selectedTool = ToolType::Rotate; ResetTransformValues();}
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Rotacionar");
+
+        // operações
+        ImGui::SameLine();
+        if (ImGui::ImageButton("Volume", (ImTextureID)(intptr_t)volumeBtn, ImVec2(24, 24))) selectedTool = ToolType::Volume;
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Volume");
+
+        ImGui::SameLine();
+        if (ImGui::ImageButton("Area", (ImTextureID)(intptr_t)areaBtn, ImVec2(24, 24))) selectedTool = ToolType::Area;
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Área");
+
+        if (ImGui::ImageButton("Wireframe", (ImTextureID)(intptr_t)wireframeBtn, ImVec2(24, 24)) && toggleWireframe) toggleWireframe();
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Wireframe");
+
+        ImGui::SameLine();
+        if (ImGui::ImageButton("Celulas", (ImTextureID)(intptr_t)celulasBtn, ImVec2(24, 24)) && toggleCell) toggleCell();
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Células");
+
+        ImGui::SameLine();
+        if (ImGui::ImageButton("RayCast", (ImTextureID)(intptr_t)raycastBtn, ImVec2(24, 24)) && OnToggleRenderType) OnToggleRenderType();
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("RayCast");
+
+        ImGui::SameLine();
+        if (ImGui::ImageButton("Exportar", (ImTextureID)(intptr_t)exportarBtn, ImVec2(24, 24))) selectedTool = ToolType::Export;
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Exportar");
+
+        ImGui::SameLine();
+        if (ImGui::ImageButton("Importar", (ImTextureID)(intptr_t)importarBtn, ImVec2(24, 24))) selectedTool = ToolType::Import;
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Importar");
+
+        ImGui::SameLine();
+        if (ImGui::ImageButton("Print", (ImTextureID)(intptr_t)printBtn, ImVec2(24, 24)) && PrintWingedEdge) PrintWingedEdge();
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Ver no console");
     }
 
-    if (ImGui::Button("Camera", buttonSize)) selectedTool = ToolType::Camera;
-    ImGui::SameLine();
     // extras
-    if (ImGui::Button("Ocultar", buttonSize) && toggleVisibility) toggleVisibility();
+    if (ImGui::ImageButton("Camera", (ImTextureID)(intptr_t)cameraBtn, ImVec2(24, 24))) selectedTool = ToolType::Camera;
+    if (ImGui::IsItemHovered()) ImGui::SetTooltip("Camera");
+
     ImGui::SameLine();
-    if (ImGui::Button("Deletar", buttonSize) && selectedObjectIndex >= 0 && OnDeleteObject) OnDeleteObject();
+    if (ImGui::ImageButton("Ocultar", (ImTextureID)(intptr_t)ocultarBtn, ImVec2(24, 24))
+        && toggleVisibility) toggleVisibility();
+    if (ImGui::IsItemHovered()) ImGui::SetTooltip("Ocultar");
+
+    ImGui::SameLine();
+    if (ImGui::ImageButton("Deletar", (ImTextureID)(intptr_t)deletarBtn, ImVec2(24, 24))
+        && selectedObjectIndex >= 0 && OnDeleteObject ) OnDeleteObject();
+    if (ImGui::IsItemHovered()) ImGui::SetTooltip("Deletar");
 }
 
 void Interface::RenderObjectListSection(const std::vector<std::string>& objectNames) {
@@ -905,4 +1006,36 @@ ToolType Interface::getSelectedTool() {
 
 void Interface::resetSelectedTool() {
     selectedTool = ToolType::None;
+}
+
+void Interface::LoadTextures(Renderer& renderer) {
+    areaBtn  = renderer.LoadTexture("assets/area.png");
+    cameraBtn  = renderer.LoadTexture("assets/camera.png");
+    celulasBtn  = renderer.LoadTexture("assets/celulas.png");
+    cilindroBtn  = renderer.LoadTexture("assets/cilindro.png");
+    coneBtn  = renderer.LoadTexture("assets/cone.png");
+    cuboBtn  = renderer.LoadTexture("assets/cubo.png");
+    deletarBtn  = renderer.LoadTexture("assets/deletar.png");
+    diferencaBtn  = renderer.LoadTexture("assets/diferenca.png");
+    escalarBtn  = renderer.LoadTexture("assets/escalar.png");
+    esferaBtn  = renderer.LoadTexture("assets/esfera.png");
+    exportarBtn  = renderer.LoadTexture("assets/exportar.png");
+    importarBtn  = renderer.LoadTexture("assets/importar.png");
+    intersecaoBtn  = renderer.LoadTexture("assets/intersecao.png");
+    kefBtn  = renderer.LoadTexture("assets/kef.png");
+    kevBtn  = renderer.LoadTexture("assets/kev.png");
+    kvfsBtn  = renderer.LoadTexture("assets/kvfs.png");
+    mevBtn  = renderer.LoadTexture("assets/mev.png");
+    mefBtn  = renderer.LoadTexture("assets/mef.png");
+    moverBtn  = renderer.LoadTexture("assets/mover.png");
+    mvfsBtn  = renderer.LoadTexture("assets/mvfs.png");
+    ocultarBtn  = renderer.LoadTexture("assets/ocultar.png");
+    printBtn  = renderer.LoadTexture("assets/print.png");
+    raycastBtn  = renderer.LoadTexture("assets/raycast.png");
+    renderBtn  = renderer.LoadTexture("assets/render.png");
+    rotacionarBtn  = renderer.LoadTexture("assets/rotacionar.png");
+    selectBtn  = renderer.LoadTexture("assets/select.png");
+    uniaoBtn  = renderer.LoadTexture("assets/uniao.png");
+    volumeBtn  = renderer.LoadTexture("assets/volume.png");
+    wireframeBtn  = renderer.LoadTexture("assets/wireframe.png");
 }

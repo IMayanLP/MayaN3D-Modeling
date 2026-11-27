@@ -6,7 +6,9 @@
 #include <functional>
 
 #include <ImGuizmo.h>
+#include <glad/glad.h>
 #include <glm/gtc/type_ptr.hpp>
+#include "../Graphics/Renderer.h"
 
 #include "Octree.h"
 #include "../BRep/BRep.h"
@@ -137,6 +139,8 @@ class Interface {
 
         ToolType getSelectedTool();
         void resetSelectedTool();
+
+        void LoadTextures(Renderer&);
     private:
         void RenderCollectionToolsSection();
 
@@ -224,4 +228,35 @@ class Interface {
         glm::vec3 debugRayOrigin = {0.0f, 0.0f, 0.0f};
         glm::vec3 debugRayDirection = {0.0f, 0.0f, 0.0f};
         bool useDebugRay = false;
+
+        // Texturas de botoes
+        GLuint areaBtn;
+        GLuint cameraBtn;
+        GLuint celulasBtn;
+        GLuint cilindroBtn;
+        GLuint coneBtn;
+        GLuint cuboBtn;
+        GLuint deletarBtn;
+        GLuint diferencaBtn;
+        GLuint escalarBtn;
+        GLuint esferaBtn;
+        GLuint exportarBtn;
+        GLuint importarBtn;
+        GLuint intersecaoBtn;
+        GLuint kefBtn;
+        GLuint kevBtn;
+        GLuint kvfsBtn;
+        GLuint mevBtn;
+        GLuint mefBtn;
+        GLuint moverBtn;
+        GLuint mvfsBtn;
+        GLuint ocultarBtn;
+        GLuint printBtn;
+        GLuint raycastBtn;
+        GLuint renderBtn;
+        GLuint rotacionarBtn;
+        GLuint selectBtn;
+        GLuint uniaoBtn;
+        GLuint volumeBtn;
+        GLuint wireframeBtn;
 };

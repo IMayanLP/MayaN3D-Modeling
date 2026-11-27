@@ -1,5 +1,6 @@
 ﻿#include "Renderer.h"
 #include <glm/gtc/matrix_transform.hpp>
+#include "../../lib/stb_image.h"
 
 #include "imgui.h"
 #include "RayCast.h"
@@ -312,4 +313,24 @@ void Renderer::DrawVertex(const Vertex* v, Shader& shader) {
     glPointSize(1.0f);
 
     glBindVertexArray(0);
+}
+
+GLuint Renderer::LoadTexture(const char* path) {
+    int width, height, channels;
+    unsigned char* data = stbi_load(path, &width, &height, &channels, 4);
+
+    if (data == nullptr) return 0;
+
+    GLuint texture;
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    stbi_image_free(data);
+
+    return texture;
 }

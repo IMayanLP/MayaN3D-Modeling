@@ -23,6 +23,8 @@ public:
     void DrawBrepVertices(const std::vector<std::unique_ptr<Vertex>>&, Shader&);
     void DrawVertex(const Vertex*, Shader&);
 
+    GLuint LoadTexture(const char* path);
+
 private:
     GLuint VAO{};
     GLuint VBO{};

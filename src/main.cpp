@@ -30,6 +30,9 @@
 #include "Engine/Ray/RayCastTexture.h"
 #include "Engine/BRep/BRep.h"
 
+#define STB_IMAGE_IMPLEMENTATION
+#include "../lib/stb_image.h"
+
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "../lib/stb_image_write.h"
 
@@ -83,7 +86,9 @@ int main() {
     Camera camera;
     Scene scene;
     Interface UI;
-    float navBarSize = 320.0f;
+    UI.LoadTextures(renderer);
+
+    float navBarSize = 328.0f;
 
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
